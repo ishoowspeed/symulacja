@@ -1,421 +1,189 @@
-# Creating a polished HTML file for the user to download.
-html = r'''<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Symulator meczu — FIFA style</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Symulator Meczu FIFA</title>
   <style>
-    :root{
-      --bg1: #06221a;
-      --bg2: #0a2c20;
-      --panel: rgba(7,12,16,0.75);
-      --accent: #39d08a;
-      --accent2: #27a46f;
-      --muted: #bcd7c4;
-      --glass: rgba(255,255,255,0.04);
+    body {
+      background: radial-gradient(circle at center, #0a3d0a 0%, #012a01 100%);
+      color: white;
+      font-family: "Poppins", sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      min-height:100vh;
-      font-family:'Roboto Condensed', Arial, sans-serif;
-      color:#eafaf0;
-      background: radial-gradient(circle at 10% 10%, rgba(255,255,255,0.02), transparent 4%),
-                  linear-gradient(180deg,var(--bg1),var(--bg2));
-      background-attachment: fixed;
-      padding:18px;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
+    h1 {
+      font-size: 2rem;
+      margin-top: 20px;
+      text-shadow: 0 0 10px #00ff00;
     }
-    .container{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
-      border-radius:14px;
-      padding:16px;
-      box-shadow:0 10px 30px rgba(3,8,12,0.6);
-      border:1px solid rgba(255,255,255,0.03);
+    .scoreboard {
+      margin: 20px auto;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 15px;
+      padding: 15px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 0 15px #0f0;
     }
-    h1{margin:0 0 10px;font-size:18px}
-    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    input[type=text], select, textarea{
-      width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;
-      resize:vertical;
+    .teams {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.5rem;
+      margin: 10px 0;
     }
-    textarea{height:110px}
-    .controls{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-    .btn{
-      background:linear-gradient(180deg,var(--accent),var(--accent2));
-      color:#042015;padding:10px 14px;border-radius:10px;border:none;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(37,156,108,0.18)
+    .controls, .inputs {
+      margin: 15px auto;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px;
+      width: 90%;
+      max-width: 600px;
     }
-    .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.06);box-shadow:none}
-    .small{font-size:12px;color:var(--muted)}
-    .match-card{display:flex;gap:12px;align-items:flex-start}
-    .left{flex:1}
-    .right{width:360px}
-    .scoreboard{
-      display:flex;align-items:center;justify-content:space-between;
-      background:linear-gradient(180deg,rgba(0,0,0,0.25),rgba(255,255,255,0.02));
-      padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);
+    input, select, button, textarea {
+      margin: 5px;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
     }
-    .teams{display:flex;gap:12px;align-items:center}
-    .team-name{font-weight:700;font-size:16px}
-    .score{font-size:48px;font-weight:800;letter-spacing:2px}
-    .meta{display:flex;flex-direction:column;align-items:center}
-    .minute{font-weight:700;font-size:16px}
-    .time-bar{height:8px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden;width:220px;margin-top:8px}
-    .time-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#86e6b0);border-radius:6px;transition:width 0.3s linear}
-
-    .feed{margin-top:12px;height:420px;overflow:auto;padding:10px;background:linear-gradient(180deg,rgba(0,0,0,0.18),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
-    .event{padding:8px;border-radius:8px;margin-bottom:8px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);display:flex;gap:10px;align-items:center}
-    .event .min{background:rgba(0,0,0,0.25);padding:6px 8px;border-radius:6px;font-weight:700;color:var(--muted);font-size:13px}
-
-    .players{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-    .team-panel{background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
-    .player{display:flex;justify-content:space-between;padding:6px;border-radius:6px;font-size:14px}
-    .player .icons{min-width:60px;text-align:right}
-    .player.goal{background:rgba(57,208,138,0.06)}
-    .player.yellow{background:rgba(255,210,110,0.05)}
-    .player.red{background:rgba(255,80,80,0.05)}
-
-    .footer{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
-    .download-note{font-size:13px;color:var(--muted);margin-top:10px}
-    @media(max-width:980px){.container{grid-template-columns:1fr}.right{width:auto}}
+    input, select, textarea {
+      width: 90%;
+      max-width: 250px;
+    }
+    button {
+      background: #00cc00;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #00ff00;
+      box-shadow: 0 0 10px #00ff00;
+    }
+    .log {
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 10px;
+      margin: 20px auto;
+      width: 90%;
+      max-width: 600px;
+      height: 250px;
+      overflow-y: auto;
+      text-align: left;
+      padding: 10px;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <h1>Ustawienia meczu</h1>
-      <label>Nazwa klubu Drużyny A</label>
-      <input id="clubA" type="text" value="FC Orły">
+  <h1>⚽ Symulator Meczu FIFA ⚽</h1>
 
-      <label style="margin-top:8px">Nazwa klubu Drużyny B</label>
-      <input id="clubB" type="text" value="FC Wilki">
-
-      <label style="margin-top:8px">Miejsce meczu</label>
-      <select id="venue">
-        <option value="A">Na stadionie drużyny A (u siebie)</option>
-        <option value="B">Na stadionie drużyny B (u siebie)</option>
-        <option value="neutral">Na neutralnym stadionie</option>
-      </select>
-
-      <label style="margin-top:12px">Skład Drużyny A (po jednej nazwie na wiersz)</label>
-      <textarea id="teamA">Lewandowski
-Kozłowski
-Konieczny
-Zieliński
-Piątek
-Nowak
-Wiśniewski
-Kowalski
-Kamiński
-Szymański
-Bąk</textarea>
-
-      <label style="margin-top:10px">Skład Drużyny B (po jednej nazwie na wiersz)</label>
-      <textarea id="teamB">Kowalczyk
-Piotrowski
-Górski
-Duda
-Szulc
-Adamek
-Walczak
-Zawada
-Brzęczek
-Czarny
-Biały</textarea>
-
-      <div class="small" style="margin-top:10px">Dodatkowe ustawienia:</div>
-      <div class="controls">
-        <label class="small"><input type="checkbox" id="penaltyResolve" checked> Rozstrzygać karne po remisie</label>
-        <label class="small"><input type="checkbox" id="extraTime"> Doliczony czas (symulacja)</label>
-      </div>
-
-      <div style="margin-top:12px">
-        <label>Prędkość (ms = czas symulowanego 1 minuty)</label>
-        <input id="speed" type="range" min="20" max="800" value="100">
-        <div class="small">Szybkość: <span id="speedVal">100</span> ms/min</div>
-      </div>
-
-      <div class="controls" style="margin-top:12px">
-        <button id="startBtn" class="btn">Start</button>
-        <button id="pauseBtn" class="btn ghost">Pauza</button>
-        <button id="resetBtn" class="btn ghost">Reset</button>
-      </div>
-
-      <div class="download-note">Po kliknięciu <strong>Start</strong> możesz obserwować symulację. Gotowy plik HTML pobierzesz poniżej.</div>
-    </div>
-
-    <div class="card match-card">
-      <div class="left">
-        <div class="scoreboard" id="scoreboard">
-          <div class="teams">
-            <div>
-              <div class="team-name" id="teamAName">Drużyna A</div>
-              <div class="small" id="teamAClub">FC Orły</div>
-            </div>
-            <div style="text-align:center">
-              <div class="score"><span id="scoreA">0</span> - <span id="scoreB">0</span></div>
-              <div class="meta">
-                <div class="minute">Minuta: <span id="minute">0'</span></div>
-                <div class="time-bar"><div id="timeFill" class="time-fill"></div></div>
-              </div>
-            </div>
-            <div style="text-align:right">
-              <div class="team-name" id="teamBName">Drużyna B</div>
-              <div class="small" id="teamBClub">FC Wilki</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="feed" id="feed"></div>
-      </div>
-
-      <div class="right">
-        <h1 style="font-size:16px;margin-bottom:8px">Składy i statystyki</h1>
-        <div class="players">
-          <div class="team-panel">
-            <div style="font-weight:700;margin-bottom:8px" id="panelAName">Drużyna A</div>
-            <div id="listA"></div>
-          </div>
-          <div class="team-panel">
-            <div style="font-weight:700;margin-bottom:8px" id="panelBName">Drużyna B</div>
-            <div id="listB"></div>
-          </div>
-        </div>
-
-        <div style="margin-top:12px" class="footer">
-          <button id="showSummary" class="btn ghost">Pokaż podsumowanie</button>
-          <a id="downloadLink" class="btn ghost" style="text-decoration:none;color:inherit" download="symulator-meczu.html">Pobierz HTML</a>
-        </div>
-      </div>
-    </div>
+  <div class="inputs">
+    <input type="text" id="teamAName" placeholder="Nazwa Klubu A" oninput="updateNames()">
+    <input type="text" id="teamBName" placeholder="Nazwa Klubu B" oninput="updateNames()">
+    <br>
+    <select id="stadium">
+      <option value="homeA">Stadion Klubu A</option>
+      <option value="homeB">Stadion Klubu B</option>
+      <option value="neutral">Neutralny Stadion</option>
+    </select>
   </div>
 
-<script>
-  // elements
-  const teamAText=document.getElementById('teamA'), teamBText=document.getElementById('teamB');
-  const startBtn=document.getElementById('startBtn'), pauseBtn=document.getElementById('pauseBtn'), resetBtn=document.getElementById('resetBtn');
-  const feed=document.getElementById('feed'), minuteEl=document.getElementById('minute');
-  const scoreAEl=document.getElementById('scoreA'), scoreBEl=document.getElementById('scoreB');
-  const listA=document.getElementById('listA'), listB=document.getElementById('listB');
-  const speedInput=document.getElementById('speed'), speedVal=document.getElementById('speedVal');
-  const penaltyResolve=document.getElementById('penaltyResolve'), extraTime=document.getElementById('extraTime');
-  const clubAEl=document.getElementById('clubA'), clubBEl=document.getElementById('clubB'), venueEl=document.getElementById('venue');
-  const teamAClub=document.getElementById('teamAClub'), teamBClub=document.getElementById('teamBClub');
-  const panelAName=document.getElementById('panelAName'), panelBName=document.getElementById('panelBName');
-  const timeFill=document.getElementById('timeFill'), downloadLink=document.getElementById('downloadLink');
+  <div class="scoreboard">
+    <div class="teams">
+      <span id="teamA">Klub A</span>
+      <span id="score">0 : 0</span>
+      <span id="teamB">Klub B</span>
+    </div>
+    <div id="time">Czas: 0'</div>
+  </div>
 
-  let teamA=[], teamB=[];
-  let minute=0, timer=null, running=false, scoreA=0, scoreB=0, events=[];
-  let stats={A:{goals:[],yellow:[],red:[]},B:{goals:[],yellow:[],red:[]}};
-  let homeAdvantage={A:1,B:1};
+  <div class="controls">
+    <button onclick="startMatch()">Start</button>
+    <button onclick="pauseMatch()">Pauza</button>
+    <button onclick="resetMatch()">Reset</button>
+  </div>
 
-  function parseTeams(){
-    teamA=teamAText.value.split('\\n').map(s=>s.trim()).filter(Boolean);
-    teamB=teamBText.value.split('\\n').map(s=>s.trim()).filter(Boolean);
-    if(teamA.length===0) teamA.push('Brak zawodników A');
-    if(teamB.length===0) teamB.push('Brak zawodników B');
-    renderPlayers();
-  }
+  <div class="log" id="log"></div>
 
-  function renderPlayers(){
-    listA.innerHTML=''; teamA.forEach((p,i)=>{const div=document.createElement('div');div.className='player';div.id='A-'+i;div.innerHTML=`<div>${i+1}. ${escapeHtml(p)}</div><div class="icons" id="Astat-${i}"></div>`;listA.appendChild(div)});
-    listB.innerHTML=''; teamB.forEach((p,i)=>{const div=document.createElement('div');div.className='player';div.id='B-'+i;div.innerHTML=`<div>${i+1}. ${escapeHtml(p)}</div><div class="icons" id="Bstat-${i}"></div>`;listB.appendChild(div)});
-    teamAClub.innerText = clubAEl.value || 'Drużyna A'; teamBClub.innerText = clubBEl.value || 'Drużyna B';
-    panelAName.innerText = clubAEl.value || 'Drużyna A'; panelBName.innerText = clubBEl.value || 'Drużyna B';
-  }
+  <script>
+    let minute = 0;
+    let scoreA = 0, scoreB = 0;
+    let interval = null;
+    let isPaused = false;
+    let homeAdvantage = 1.0;
 
-  function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function updateNames() {
+      document.getElementById("teamA").innerText = document.getElementById("teamAName").value || "Klub A";
+      document.getElementById("teamB").innerText = document.getElementById("teamBName").value || "Klub B";
+    }
 
-  function startMatch(){
-    if(running) return;
-    parseTeams();
-    running=true; startBtn.disabled=true; pauseBtn.disabled=false;
-    minute=0; scoreA=0; scoreB=0; events=[];
-    stats={A:{goals:[],yellow:[],red:[]},B:{goals:[],yellow:[],red:[]}};
-    feed.innerHTML=''; updateScore(); updateMinute();
-    addEvent(0,`Rozpoczęcie meczu — ${clubAEl.value} vs ${clubBEl.value}`);
-    setVenueAdvantage();
-    scheduleStep();
-  }
+    function logEvent(text) {
+      const logDiv = document.getElementById("log");
+      logDiv.innerHTML += `<div>[${minute}'] ${text}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
 
-  function setVenueAdvantage(){
-    const v=venueEl.value;
-    if(v==='A'){ homeAdvantage={A:1.12,B:0.92}; addEvent(0,`${clubAEl.value} gra u siebie — lekka przewaga.`); }
-    else if(v==='B'){ homeAdvantage={A:0.92,B:1.12}; addEvent(0,`${clubBEl.value} gra u siebie — lekka przewaga.`); }
-    else { homeAdvantage={A:1,B:1}; addEvent(0,'Neutralny stadion — bez przewagi.'); }
-  }
+    function randomEvent() {
+      const r = Math.random();
+      const adjustedA = homeAdvantage;
+      const adjustedB = 2 - homeAdvantage;
 
-  function scheduleStep(){ const ms=Number(speedInput.value)||100; timer=setTimeout(stepMinute,ms); }
-
-  function stepMinute(){ if(!running) return; minute++; updateMinute(); simulateMinute(minute); if(minute<90) scheduleStep(); else finishRegularTime(); }
-
-  function simulateMinute(m){
-    const base=0.22;
-    if(Math.random() < base){
-      const r=Math.random();
-      // bias probability by homeAdvantage relative weights (simple)
-      const weightA = homeAdvantage.A, weightB = homeAdvantage.B;
-      const chooseTeam = ()=> Math.random() < (weightA/(weightA+weightB)) ? 'A' : 'B';
-      if(r < 0.45){ const team = chooseTeam(); goalEvent(team,m); }
-      else if(r < 0.7){ const team = Math.random()<0.5 ? 'A' : 'B'; cardEvent(team,'yellow',m); }
-      else if(r < 0.82){ const team = Math.random()<0.5 ? 'A' : 'B'; cardEvent(team,'red',m); }
-      else if(r < 0.92){ const team = Math.random()<0.5 ? 'A' : 'B'; penaltyEvent(team,m); }
-      else { subOrMiss(Math.random()<0.5?'A':'B',m); }
-    } else {
-      if(Math.random() < 0.08){
-        const team = Math.random()<0.5 ? 'A' : 'B';
-        addEvent(m,`Szansa dla drużyny ${team==='A'? clubAEl.value : clubBEl.value} — strzał, ale bez bramki.`);
+      if (r < 0.05 * adjustedA) {
+        scoreA++;
+        logEvent(`${document.getElementById("teamA").innerText} zdobywa gola! ⚽`);
+      } else if (r < 0.1 * adjustedB) {
+        scoreB++;
+        logEvent(`${document.getElementById("teamB").innerText} zdobywa gola! ⚽`);
+      } else if (r < 0.13) {
+        logEvent("Żółta kartka! 🟨");
+      } else if (r < 0.14) {
+        logEvent("Czerwona kartka! 🟥");
+      } else if (r < 0.16) {
+        logEvent("Kapitalna obrona bramkarza! 🧤");
       }
+      document.getElementById("score").innerText = `${scoreA} : ${scoreB}`;
     }
-  }
 
-  function pickPlayer(team){ if(team==='A') return {name: teamA[Math.floor(Math.random()*teamA.length)], idx: Math.floor(Math.random()*teamA.length)}; return {name: teamB[Math.floor(Math.random()*teamB.length)], idx: Math.floor(Math.random()*teamB.length)}; }
-
-  function goalEvent(team,m){
-    const p = pickPlayer(team);
-    const club = team==='A'? clubAEl.value : clubBEl.value;
-    // slight modifier: homeAdvantage increases chance to score reflected already in team selection
-    if(team==='A'){ scoreA++; stats.A.goals.push({player:p.name,minute:m}); } else { scoreB++; stats.B.goals.push({player:p.name,minute:m}); }
-    updateScore();
-    addEvent(m,`⚽ Bramk! ${p.name} (${club}) — strzał z akcji.`);
-    markPlayer(team,p.idx,'goal');
-  }
-
-  function cardEvent(team,type,m){
-    const p = pickPlayer(team);
-    if(type==='yellow'){ if(team==='A') stats.A.yellow.push({player:p.name,minute:m}); else stats.B.yellow.push({player:p.name,minute:m}); addEvent(m,`🟨 Kartka: ${p.name} — ŻÓŁTA karta.`); markPlayer(team,p.idx,'yellow'); }
-    else { if(team==='A') stats.A.red.push({player:p.name,minute:m}); else stats.B.red.push({player:p.name,minute:m}); addEvent(m,`🟥 Kartka: ${p.name} — CZERWONA karta!`); markPlayer(team,p.idx,'red'); }
-  }
-
-  function penaltyEvent(team,m){
-    const attacker = pickPlayer(team);
-    addEvent(m,`Rzut karny dla ${team==='A'? clubAEl.value : clubBEl.value} — wykona ${attacker.name}.`);
-    const scoreChance = 0.78;
-    const scored = Math.random() < scoreChance;
-    setTimeout(()=>{
-      if(scored){
-        if(team==='A'){ scoreA++; stats.A.goals.push({player:attacker.name,minute:m+' (k)'}); } else { scoreB++; stats.B.goals.push({player:attacker.name,minute:m+' (k)'}); }
-        updateScore();
-        addEvent(m,`GOOOL z karnego! ${attacker.name} trafia.`);
-        markPlayer(team,attacker.idx,'goal');
-      } else addEvent(m,'Karny nie trafiony — bramkarz lub słupek ratuje.');
-    }, Number(speedInput.value)*0.8);
-  }
-
-  function subOrMiss(team,m){
-    if(Math.random() < 0.5){ const p = pickPlayer(team); addEvent(m,`Strzał obok lub obrona — ${p.name} nie trafia.`); } else { const pOut = pickPlayer(team); addEvent(m,`Zmiana w drużynie ${team==='A'? clubAEl.value : clubBEl.value}: ${pOut.name} -> Zmiennik.`); }
-  }
-
-  function markPlayer(team,idx,cls){
-    const id = (team==='A'? 'A-':'B-')+idx;
-    const el = document.getElementById(id);
-    if(!el) return;
-    el.classList.add(cls);
-    const stat = document.getElementById((team==='A'? 'Astat-':'Bstat-')+idx);
-    if(!stat) return;
-    if(cls==='goal') stat.innerText = (stat.innerText? stat.innerText+' ':'') + '⚽';
-    if(cls==='yellow') stat.innerText = (stat.innerText? stat.innerText+' ':'') + '🟨';
-    if(cls==='red') stat.innerText = (stat.innerText? stat.innerText+' ':'') + '🟥';
-  }
-
-  function addEvent(min,text){
-    const div=document.createElement('div'); div.className='event';
-    div.innerHTML = `<div class="min">${min}'</div><div style="flex:1">${escapeHtml(text)}</div>`;
-    feed.prepend(div); events.push({minute:min,text}); // keep log
-  }
-
-  function updateScore(){ scoreAEl.innerText = scoreA; scoreBEl.innerText = scoreB; updateTimeFill(); }
-  function updateMinute(){ minuteEl.innerText = minute + \"'\"; updateTimeFill(); }
-  function updateTimeFill(){ const pct = Math.min(100, Math.round((minute/90)*100)); timeFill.style.width = pct + '%'; }
-
-  function finishRegularTime(){
-    running=false; startBtn.disabled=false; pauseBtn.disabled=true;
-    addEvent(90,'Koniec regulaminowego czasu gry.');
-    if(extraTime.checked){
-      const added = Math.floor(Math.random()*5)+1;
-      addEvent(90+added,`Sędzia dolicza ${added} minut.`);
-      minute = 90;
-      let extra = 0;
-      const doExtra = ()=>{ extra++; minute = 90+extra; updateMinute(); simulateMinute(minute); if(extra < added) setTimeout(doExtra, Number(speedInput.value)); else finalDecide(); }
-      setTimeout(doExtra, Number(speedInput.value));
-    } else finalDecide();
-  }
-
-  function finalDecide(){
-    if(scoreA===scoreB && penaltyResolve.checked){
-      addEvent(minute, 'Remis — rozstrzygamy karne!');
-      setTimeout(()=>penaltyShootout(), Number(speedInput.value));
-    } else addEvent(minute, `KONIEC MECZU — wynik ${scoreA} : ${scoreB}`);
-  }
-
-  function penaltyShootout(){
-    const kicks = 5; let a=0,b=0; const log=[];
-    for(let i=0;i<kicks;i++){
-      const pa = teamA[Math.floor(Math.random()*teamA.length)];
-      const pb = teamB[Math.floor(Math.random()*teamB.length)];
-      const ra = Math.random() < 0.78; const rb = Math.random() < 0.78;
-      if(ra){ a++; log.push(`A: ${pa} - gol`);} else log.push(`A: ${pa} - pudło`);
-      if(rb){ b++; log.push(`B: ${pb} - gol`);} else log.push(`B: ${pb} - pudło`);
+    function startMatch() {
+      if (interval) return;
+      const stadium = document.getElementById("stadium").value;
+      homeAdvantage = stadium === "homeA" ? 1.15 : stadium === "homeB" ? 0.85 : 1.0;
+      logEvent("🔔 Mecz rozpoczęty!");
+      interval = setInterval(() => {
+        if (!isPaused) {
+          minute++;
+          document.getElementById("time").innerText = `Czas: ${minute}'`;
+          randomEvent();
+          if (minute >= 90) {
+            clearInterval(interval);
+            interval = null;
+            logEvent(`🏁 Koniec meczu! Wynik: ${scoreA} - ${scoreB}`);
+          }
+        }
+      }, 300); // 300ms = 1 minuta w grze
     }
-    let sd = 0;
-    while(a===b){
-      sd++;
-      const pa = teamA[Math.floor(Math.random()*teamA.length)];
-      const pb = teamB[Math.floor(Math.random()*teamB.length)];
-      const ra = Math.random() < 0.78; const rb = Math.random() < 0.78;
-      if(ra) a++; if(rb) b++;
-      log.push(`SD A: ${pa} - ${ra? 'gol':'pudło'}`); log.push(`SD B: ${pb} - ${rb? 'gol':'pudło'}`);
-      if(sd>20) break;
+
+    function pauseMatch() {
+      isPaused = !isPaused;
+      logEvent(isPaused ? "⏸️ Pauza" : "▶️ Wznowiono mecz");
     }
-    addEvent(minute, `KARNE: ${a} : ${b}`);
-    log.forEach(l=>addEvent(minute, l));
-    addEvent(minute, `KONIEC po karnych — wynik końcowy ${scoreA} (${a}) : ${scoreB} (${b})`);
-  }
 
-  // controls
-  startBtn.addEventListener('click', startMatch);
-  pauseBtn.addEventListener('click', ()=>{ if(!running){ running=true; pauseBtn.innerText='Pauza'; scheduleStep(); } else { running=false; pauseBtn.innerText='Wznów'; clearTimeout(timer); } });
-  resetBtn.addEventListener('click', ()=>{ clearTimeout(timer); running=false; minute=0; scoreA=0; scoreB=0; events=[]; feed.innerHTML=''; updateMinute(); updateScore(); renderPlayers(); startBtn.disabled=false; pauseBtn.disabled=true; pauseBtn.innerText='Pauza'; addEvent(0,'Mecz zresetowany.'); });
-
-  speedInput.addEventListener('input', ()=>{ speedVal.innerText = speedInput.value; });
-
-  showSummary.addEventListener('click', ()=>{
-    const parts=[];
-    parts.push(`Wynik: ${scoreA} : ${scoreB}`);
-    parts.push('Bramki A: ' + (stats.A.goals.length? stats.A.goals.map(g=>`${g.player} (${g.minute})`).join(', ') : 'brak'));
-    parts.push('Bramki B: ' + (stats.B.goals.length? stats.B.goals.map(g=>`${g.player} (${g.minute})`).join(', ') : 'brak'));
-    alert(parts.join('\\n'));
-  });
-
-  // prepare download: create blob and attach to download link
-  function prepareDownload(){
-    const htmlContent = document.documentElement.outerHTML;
-    const blob = new Blob([htmlContent], {type: 'text/html'});
-    const url = URL.createObjectURL(blob);
-    downloadLink.href = url;
-  }
-
-  // initial
-  parseTeams();
-  pauseBtn.disabled=true;
-  speedVal.innerText = speedInput.value;
-  addEvent(0,'Gotowy do symulacji.');
-  prepareDownload();
-
-  // update download whenever user changes big inputs (so file includes latest names)
-  [teamAText,teamBText,clubAEl,clubBEl,venueEl].forEach(el=>el.addEventListener('input', prepareDownload));
-</script>
+    function resetMatch() {
+      clearInterval(interval);
+      interval = null;
+      minute = 0;
+      scoreA = 0;
+      scoreB = 0;
+      isPaused = false;
+      document.getElementById("time").innerText = "Czas: 0'";
+      document.getElementById("score").innerText = "0 : 0";
+      document.getElementById("log").innerHTML = "";
+      logEvent("🔄 Mecz zresetowany.");
+    }
+  </script>
 </body>
 </html>
-'''
-
-# write file
-path = "/mnt/data/symulator-meczu.html"
-with open(path, "w", encoding="utf-8") as f:
-    f.write(html)
-
-path
