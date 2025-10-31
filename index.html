@@ -1,189 +1,237 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Symulator Meczu FIFA</title>
-  <style>
-    body {
-      background: radial-gradient(circle at center, #0a3d0a 0%, #012a01 100%);
-      color: white;
-      font-family: "Poppins", sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-    }
-    h1 {
-      font-size: 2rem;
-      margin-top: 20px;
-      text-shadow: 0 0 10px #00ff00;
-    }
-    .scoreboard {
-      margin: 20px auto;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 15px;
-      padding: 15px;
-      width: 90%;
-      max-width: 600px;
-      box-shadow: 0 0 15px #0f0;
-    }
-    .teams {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 1.5rem;
-      margin: 10px 0;
-    }
-    .controls, .inputs {
-      margin: 15px auto;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 10px;
-      width: 90%;
-      max-width: 600px;
-    }
-    input, select, button, textarea {
-      margin: 5px;
-      padding: 8px;
-      border-radius: 8px;
-      border: none;
-      font-size: 1rem;
-    }
-    input, select, textarea {
-      width: 90%;
-      max-width: 250px;
-    }
-    button {
-      background: #00cc00;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #00ff00;
-      box-shadow: 0 0 10px #00ff00;
-    }
-    .log {
-      background: rgba(0, 0, 0, 0.6);
-      border-radius: 10px;
-      margin: 20px auto;
-      width: 90%;
-      max-width: 600px;
-      height: 250px;
-      overflow-y: auto;
-      text-align: left;
-      padding: 10px;
-      font-size: 0.9rem;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Symulator Meczu FIFA+</title>
+<style>
+  body {
+    background: radial-gradient(circle at center, #0b3d0b 0%, #012a01 100%);
+    color: white;
+    font-family: "Poppins", sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+  }
+  h1 { text-shadow: 0 0 10px #0f0; }
+  .container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  .team-inputs, .match-controls {
+    background: rgba(0,0,0,0.5);
+    border-radius: 10px;
+    margin: 10px;
+    padding: 15px;
+    width: 280px;
+  }
+  input, select, button, textarea {
+    margin: 4px;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    width: 90%;
+  }
+  button {
+    background: #00cc00;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button:hover { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
+  #pitch {
+    position: relative;
+    width: 600px;
+    height: 350px;
+    background: linear-gradient(to bottom, #007a00 0%, #005500 100%);
+    border: 3px solid white;
+    border-radius: 15px;
+    margin: 15px auto;
+  }
+  .player {
+    position: absolute;
+    width: 70px;
+    height: 25px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid white;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .out { opacity: 0.4; text-decoration: line-through; }
+  .log {
+    background: rgba(0,0,0,0.6);
+    border-radius: 10px;
+    width: 90%;
+    max-width: 650px;
+    margin: 20px auto;
+    padding: 10px;
+    height: 220px;
+    overflow-y: auto;
+    text-align: left;
+    font-size: 0.9rem;
+  }
+</style>
 </head>
 <body>
-  <h1>⚽ Symulator Meczu FIFA ⚽</h1>
+<h1>⚽ Symulator Meczu FIFA+ ⚽</h1>
 
-  <div class="inputs">
-    <input type="text" id="teamAName" placeholder="Nazwa Klubu A" oninput="updateNames()">
-    <input type="text" id="teamBName" placeholder="Nazwa Klubu B" oninput="updateNames()">
-    <br>
-    <select id="stadium">
-      <option value="homeA">Stadion Klubu A</option>
-      <option value="homeB">Stadion Klubu B</option>
-      <option value="neutral">Neutralny Stadion</option>
-    </select>
+<div class="container">
+  <div class="team-inputs">
+    <h3>Drużyna A</h3>
+    <input id="teamAName" placeholder="Nazwa klubu A" oninput="updateNames()"><br>
+    <textarea id="teamAPlayers" rows="6" placeholder="Bramkarz, Obrona, Pomoc, Atak... (po przecinku)"></textarea>
   </div>
 
-  <div class="scoreboard">
-    <div class="teams">
-      <span id="teamA">Klub A</span>
-      <span id="score">0 : 0</span>
-      <span id="teamB">Klub B</span>
-    </div>
-    <div id="time">Czas: 0'</div>
+  <div class="team-inputs">
+    <h3>Drużyna B</h3>
+    <input id="teamBName" placeholder="Nazwa klubu B" oninput="updateNames()"><br>
+    <textarea id="teamBPlayers" rows="6" placeholder="Bramkarz, Obrona, Pomoc, Atak... (po przecinku)"></textarea>
   </div>
+</div>
 
-  <div class="controls">
-    <button onclick="startMatch()">Start</button>
-    <button onclick="pauseMatch()">Pauza</button>
-    <button onclick="resetMatch()">Reset</button>
-  </div>
+<select id="stadium">
+  <option value="homeA">Stadion Klubu A</option>
+  <option value="homeB">Stadion Klubu B</option>
+  <option value="neutral">Neutralny stadion</option>
+</select>
 
-  <div class="log" id="log"></div>
+<div class="match-controls">
+  <h3><span id="nameA">Klub A</span> vs <span id="nameB">Klub B</span></h3>
+  <div id="score">0 : 0</div>
+  <div id="time">Czas: 0'</div>
+  <button onclick="startMatch()">Start</button>
+  <button onclick="pauseMatch()">Pauza</button>
+  <button onclick="resetMatch()">Reset</button>
+</div>
 
-  <script>
-    let minute = 0;
-    let scoreA = 0, scoreB = 0;
-    let interval = null;
-    let isPaused = false;
-    let homeAdvantage = 1.0;
+<div id="pitch"></div>
+<div id="log" class="log"></div>
 
-    function updateNames() {
-      document.getElementById("teamA").innerText = document.getElementById("teamAName").value || "Klub A";
-      document.getElementById("teamB").innerText = document.getElementById("teamBName").value || "Klub B";
-    }
+<script>
+let minute = 0, scoreA = 0, scoreB = 0;
+let interval = null, paused = false;
+let teamA = [], teamB = [];
+let homeAdvantage = 1.0;
 
-    function logEvent(text) {
-      const logDiv = document.getElementById("log");
-      logDiv.innerHTML += `<div>[${minute}'] ${text}</div>`;
-      logDiv.scrollTop = logDiv.scrollHeight;
-    }
+function updateNames(){
+  document.getElementById("nameA").innerText = document.getElementById("teamAName").value || "Klub A";
+  document.getElementById("nameB").innerText = document.getElementById("teamBName").value || "Klub B";
+}
 
-    function randomEvent() {
-      const r = Math.random();
-      const adjustedA = homeAdvantage;
-      const adjustedB = 2 - homeAdvantage;
+function setupPitch(){
+  const pitch = document.getElementById("pitch");
+  pitch.innerHTML = "";
+  const aPlayers = document.getElementById("teamAPlayers").value.split(",").map(p=>p.trim()).filter(p=>p);
+  const bPlayers = document.getElementById("teamBPlayers").value.split(",").map(p=>p.trim()).filter(p=>p);
+  teamA = aPlayers.map(p=>({name:p, team:"A", active:true, position:detectPos(p)}));
+  teamB = bPlayers.map(p=>({name:p, team:"B", active:true, position:detectPos(p)}));
+  renderPlayers();
+}
 
-      if (r < 0.05 * adjustedA) {
-        scoreA++;
-        logEvent(`${document.getElementById("teamA").innerText} zdobywa gola! ⚽`);
-      } else if (r < 0.1 * adjustedB) {
-        scoreB++;
-        logEvent(`${document.getElementById("teamB").innerText} zdobywa gola! ⚽`);
-      } else if (r < 0.13) {
-        logEvent("Żółta kartka! 🟨");
-      } else if (r < 0.14) {
-        logEvent("Czerwona kartka! 🟥");
-      } else if (r < 0.16) {
-        logEvent("Kapitalna obrona bramkarza! 🧤");
+function detectPos(name){
+  name = name.toLowerCase();
+  if(name.includes("bram")) return "GK";
+  if(name.includes("obron")) return "DEF";
+  if(name.includes("pomoc")) return "MID";
+  if(name.includes("atak") || name.includes("napad")) return "ATT";
+  return "MID";
+}
+
+function renderPlayers(){
+  const pitch = document.getElementById("pitch");
+  pitch.innerHTML = "";
+  teamA.forEach((p,i)=>{
+    const el=document.createElement("div");
+    el.className="player "+(p.active?"":"out");
+    el.innerText=p.name;
+    el.style.left = 50 + (i%4)*120 + "px";
+    el.style.top = 50 + Math.floor(i/4)*60 + "px";
+    pitch.appendChild(el);
+  });
+  teamB.forEach((p,i)=>{
+    const el=document.createElement("div");
+    el.className="player "+(p.active?"":"out");
+    el.innerText=p.name;
+    el.style.right = 50 + (i%4)*120 + "px";
+    el.style.bottom = 50 + Math.floor(i/4)*60 + "px";
+    pitch.appendChild(el);
+  });
+}
+
+function logEvent(t){
+  const log=document.getElementById("log");
+  log.innerHTML += `<div>[${minute}'] ${t}</div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+function randomEvent(){
+  const allPlayers=[...teamA.filter(p=>p.active),...teamB.filter(p=>p.active)];
+  if(allPlayers.length===0) return;
+  const player=allPlayers[Math.floor(Math.random()*allPlayers.length)];
+  const base=Math.random();
+
+  let chance = 0;
+  if(player.position==="ATT") chance=0.07;
+  else if(player.position==="MID") chance=0.04;
+  else if(player.position==="DEF") chance=0.015;
+  else if(player.position==="GK") chance=0.005;
+
+  if(player.team==="A") chance *= homeAdvantage;
+  if(player.team==="B") chance *= (2-homeAdvantage);
+
+  if(base < chance){
+    if(player.team==="A"){ scoreA++; logEvent(`⚽ ${player.name} (${document.getElementById("nameA").innerText}) zdobywa gola!`); }
+    else { scoreB++; logEvent(`⚽ ${player.name} (${document.getElementById("nameB").innerText}) zdobywa gola!`); }
+  } else if(base < 0.13){
+    logEvent(`🟨 Żółta kartka dla ${player.name}`);
+  } else if(base < 0.14){
+    player.active=false;
+    logEvent(`🟥 ${player.name} otrzymuje czerwoną kartkę i opuszcza boisko!`);
+    renderPlayers();
+  }
+  document.getElementById("score").innerText = `${scoreA} : ${scoreB}`;
+}
+
+function startMatch(){
+  if(interval) return;
+  setupPitch();
+  const stadium=document.getElementById("stadium").value;
+  homeAdvantage = stadium==="homeA" ? 1.15 : stadium==="homeB" ? 0.85 : 1.0;
+  logEvent("🔔 Mecz rozpoczęty!");
+  interval=setInterval(()=>{
+    if(!paused){
+      minute++;
+      document.getElementById("time").innerText=`Czas: ${minute}'`;
+      randomEvent();
+      if(minute>=90){
+        clearInterval(interval);
+        interval=null;
+        logEvent(`🏁 Koniec meczu! Wynik: ${scoreA} - ${scoreB}`);
       }
-      document.getElementById("score").innerText = `${scoreA} : ${scoreB}`;
     }
+  },300);
+}
 
-    function startMatch() {
-      if (interval) return;
-      const stadium = document.getElementById("stadium").value;
-      homeAdvantage = stadium === "homeA" ? 1.15 : stadium === "homeB" ? 0.85 : 1.0;
-      logEvent("🔔 Mecz rozpoczęty!");
-      interval = setInterval(() => {
-        if (!isPaused) {
-          minute++;
-          document.getElementById("time").innerText = `Czas: ${minute}'`;
-          randomEvent();
-          if (minute >= 90) {
-            clearInterval(interval);
-            interval = null;
-            logEvent(`🏁 Koniec meczu! Wynik: ${scoreA} - ${scoreB}`);
-          }
-        }
-      }, 300); // 300ms = 1 minuta w grze
-    }
+function pauseMatch(){
+  paused=!paused;
+  logEvent(paused ? "⏸️ Pauza" : "▶️ Wznowiono mecz");
+}
 
-    function pauseMatch() {
-      isPaused = !isPaused;
-      logEvent(isPaused ? "⏸️ Pauza" : "▶️ Wznowiono mecz");
-    }
-
-    function resetMatch() {
-      clearInterval(interval);
-      interval = null;
-      minute = 0;
-      scoreA = 0;
-      scoreB = 0;
-      isPaused = false;
-      document.getElementById("time").innerText = "Czas: 0'";
-      document.getElementById("score").innerText = "0 : 0";
-      document.getElementById("log").innerHTML = "";
-      logEvent("🔄 Mecz zresetowany.");
-    }
-  </script>
+function resetMatch(){
+  clearInterval(interval);
+  interval=null;
+  minute=0;scoreA=0;scoreB=0;paused=false;
+  document.getElementById("log").innerHTML="";
+  document.getElementById("score").innerText="0 : 0";
+  document.getElementById("time").innerText="Czas: 0'";
+  setupPitch();
+  logEvent("🔄 Mecz zresetowany.");
+}
+</script>
 </body>
 </html>
