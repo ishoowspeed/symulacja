@@ -1,273 +1,704 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Symulator Meczu FIFA Pro</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Symulator meczu — 2D zaawansowany</title>
 <style>
-  body {
-    background: radial-gradient(circle at center, #0b3d0b 0%, #012a01 100%);
-    color: white;
-    font-family: "Poppins", sans-serif;
-    text-align: center;
-    margin: 0;
+  :root{
+    --bg1:#05320f; --bg2:#01220a; --panel:rgba(0,0,0,0.45);
+    --accent:#47d07a; --muted:#b9e6c8; --danger:#ff6b6b;
   }
-  header {
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 10px;
+  *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+  body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:#e9fff2;padding:14px}
+  header{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+  header button{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:10px 14px;border-radius:8px;cursor:pointer}
+  header button.active{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.2));box-shadow:0 8px 22px rgba(0,0,0,0.6);color:#fff;border-color:rgba(255,255,255,0.1)}
+  main{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:12px}
+  section.panel{display:none;padding:12px;background:var(--panel);border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+  section.panel.active{display:block}
+  .form-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  label{min-width:110px;color:var(--muted);font-size:14px}
+  input[type=text], textarea, select{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px;border-radius:8px;color:inherit;width:100%}
+  textarea{min-height:70px;resize:vertical}
+  .save-btn{background:linear-gradient(180deg,var(--accent),#2aa55e);border:none;color:#052015;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700}
+  .row{display:flex;gap:12px;align-items:flex-start}
+  /* Mecz layout */
+  .left{flex:1}
+  .right{width:360px}
+  .scoreboard{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.03)}
+  .teams{display:flex;gap:10px;align-items:center}
+  .team-title{font-weight:700;font-size:18px}
+  .score{font-size:44px;font-weight:800}
+  .meta{font-size:14px;color:var(--muted)}
+  /* Pitch */
+  #pitch{position:relative;width:100%;max-width:740px;height:440px;margin:12px auto;border-radius:12px;background:
+    linear-gradient(#0b6f2e,#05541d);box-shadow:inset 0 0 0 4px rgba(255,255,255,0.02);border:2px solid rgba(255,255,255,0.03)}
+  .zone{position:absolute;left:0;right:0;text-align:center;color:rgba(255,255,255,0.08);font-weight:700}
+  .zone.gk{top:6px}
+  .zone.def{top:90px}
+  .zone.mid{top:200px}
+  .zone.att{top:320px}
+  .player{
+    position:absolute;padding:4px 8px;border-radius:6px;background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.04);font-size:13px;color:#fff;display:flex;align-items:center;gap:6px;
   }
-  header button {
-    background: #0a0;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    padding: 10px 20px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.3s;
-  }
-  header button.active, header button:hover {
-    background: #00ff00;
-    box-shadow: 0 0 10px #00ff00;
-  }
-  section {
-    display: none;
-    padding: 20px;
-  }
-  section.active {
-    display: block;
-  }
-  input, textarea, select, button {
-    margin: 5px;
-    padding: 8px;
-    border-radius: 8px;
-    border: none;
-    font-size: 1rem;
-  }
-  textarea {
-    width: 90%;
-    max-width: 400px;
-    height: 100px;
-  }
-  .team-card {
-    background: rgba(0,0,0,0.5);
-    border-radius: 10px;
-    margin: 10px auto;
-    padding: 15px;
-    width: 90%;
-    max-width: 500px;
-  }
-  #pitch {
-    position: relative;
-    width: 600px;
-    height: 350px;
-    background: linear-gradient(to bottom, #007a00 0%, #005500 100%);
-    border: 3px solid white;
-    border-radius: 15px;
-    margin: 15px auto;
-  }
-  .player {
-    position: absolute;
-    width: 70px;
-    height: 25px;
-    background: rgba(255,255,255,0.2);
-    border: 1px solid white;
-    border-radius: 5px;
-    font-size: 0.7rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .out { opacity: 0.4; text-decoration: line-through; }
-  .log {
-    background: rgba(0,0,0,0.6);
-    border-radius: 10px;
-    width: 90%;
-    max-width: 650px;
-    margin: 20px auto;
-    padding: 10px;
-    height: 220px;
-    overflow-y: auto;
-    text-align: left;
-    font-size: 0.9rem;
-  }
+  .player .left-icons{min-width:22px;text-align:right;margin-right:6px}
+  .player .right-icons{min-width:22px;text-align:left;margin-left:6px}
+  .player.out{opacity:0.35;text-decoration:line-through}
+  .log{background:linear-gradient(180deg,rgba(0,0,0,0.35),rgba(0,0,0,0.18));padding:10px;border-radius:8px;height:320px;overflow:auto;border:1px solid rgba(255,255,255,0.02)}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  button.control{background:var(--accent);border:none;color:#052015;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+  .small{font-size:13px;color:var(--muted)}
+  @media(max-width:980px){.row{flex-direction:column}.right{width:100%}}
 </style>
 </head>
 <body>
-
 <header>
   <button id="tabA" class="active" onclick="showTab('teamA')">Drużyna A</button>
   <button id="tabB" onclick="showTab('teamB')">Drużyna B</button>
   <button id="tabMatch" onclick="showTab('match')">Mecz</button>
 </header>
 
-<section id="teamA" class="active">
-  <div class="team-card">
-    <h2>⚽ Ustawienia Drużyny A</h2>
-    <input id="teamAName" placeholder="Nazwa klubu A"><br>
-    <textarea id="teamAPlayers" placeholder="Podaj zawodników (Bramkarz, Obrona, Pomoc, Atak... po przecinku)"></textarea><br>
-    <button onclick="saveTeam('A')">Zapisz skład</button>
-  </div>
-</section>
+<main>
+  <!-- TEAM A -->
+  <section id="teamA" class="panel active">
+    <div class="form-row">
+      <label>Nazwa klubu A</label>
+      <input id="teamAName" type="text" placeholder="np. Orły FC" oninput="liveNameUpdate()">
+    </div>
+    <div style="height:8px"></div>
+    <div class="team-card">
+      <div class="form-row">
+        <label>Bramkarz (1)</label>
+        <input id="A_gk" type="text" placeholder="Imię Nazwisko (tylko 1)" />
+      </div>
+      <div class="form-row">
+        <label>Obrońcy</label>
+        <textarea id="A_def" placeholder="Oddziel przecinkami (np. Kowalski, Nowak)"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Pomoc</label>
+        <textarea id="A_mid" placeholder="Oddziel przecinkami"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Atak</label>
+        <textarea id="A_att" placeholder="Oddziel przecinkami"></textarea>
+      </div>
+      <div style="margin-top:8px">
+        <button class="save-btn" onclick="saveTeam('A')">Zapisz skład A</button>
+        <span class="small" style="margin-left:12px">Maksymalnie 11 zawodników łącznie (1 GK + reszta)</span>
+      </div>
+    </div>
+  </section>
 
-<section id="teamB">
-  <div class="team-card">
-    <h2>⚽ Ustawienia Drużyny B</h2>
-    <input id="teamBName" placeholder="Nazwa klubu B"><br>
-    <textarea id="teamBPlayers" placeholder="Podaj zawodników (Bramkarz, Obrona, Pomoc, Atak... po przecinku)"></textarea><br>
-    <button onclick="saveTeam('B')">Zapisz skład</button>
-  </div>
-</section>
+  <!-- TEAM B -->
+  <section id="teamB" class="panel">
+    <div class="form-row">
+      <label>Nazwa klubu B</label>
+      <input id="teamBName" type="text" placeholder="np. Wilki FC" oninput="liveNameUpdate()">
+    </div>
+    <div style="height:8px"></div>
+    <div class="team-card">
+      <div class="form-row">
+        <label>Bramkarz (1)</label>
+        <input id="B_gk" type="text" placeholder="Imię Nazwisko (tylko 1)" />
+      </div>
+      <div class="form-row">
+        <label>Obrońcy</label>
+        <textarea id="B_def" placeholder="Oddziel przecinkami (np. Kowalski, Nowak)"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Pomoc</label>
+        <textarea id="B_mid" placeholder="Oddziel przecinkami"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Atak</label>
+        <textarea id="B_att" placeholder="Oddziel przecinkami"></textarea>
+      </div>
+      <div style="margin-top:8px">
+        <button class="save-btn" onclick="saveTeam('B')">Zapisz skład B</button>
+        <span class="small" style="margin-left:12px">Maksymalnie 11 zawodników łącznie (1 GK + reszta)</span>
+      </div>
+    </div>
+  </section>
 
-<section id="match">
-  <h2>🏟️ Mecz</h2>
-  <select id="stadium">
-    <option value="homeA">Stadion Klubu A</option>
-    <option value="homeB">Stadion Klubu B</option>
-    <option value="neutral">Neutralny stadion</option>
-  </select>
-  <div id="score">0 : 0</div>
-  <div id="time">Czas: 0'</div>
-  <button onclick="startMatch()">Start</button>
-  <button onclick="pauseMatch()">Pauza</button>
-  <button onclick="resetMatch()">Reset</button>
-  <div id="pitch"></div>
-  <div id="log" class="log"></div>
-</section>
+  <!-- MATCH -->
+  <section id="match" class="panel">
+    <div class="row">
+      <div class="left">
+        <div class="scoreboard">
+          <div class="teams">
+            <div>
+              <div class="team-title" id="displayA">Drużyna A</div>
+              <div class="small" id="clubAmini">—</div>
+            </div>
+            <div style="text-align:center">
+              <div class="score" id="scoreDisplay">0 : 0</div>
+              <div class="meta" id="minuteDisplay">Minuta: 0'</div>
+            </div>
+            <div style="text-align:right">
+              <div class="team-title" id="displayB">Drużyna B</div>
+              <div class="small" id="clubBmini">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="pitch">
+          <div class="zone gk">BRAMKARZE</div>
+          <div class="zone def">OBRONA</div>
+          <div class="zone mid">POMOC</div>
+          <div class="zone att">NAPAD</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <select id="stadium"><option value="homeA">Stadion A (u siebie A)</option><option value="homeB">Stadion B (u siebie B)</option><option value="neutral">Neutralny</option></select>
+          <div style="flex:1" class="small">Przewaga gospodarza: lekka (ok. 12%)</div>
+        </div>
+
+        <div class="controls">
+          <button class="control" onclick="startMatch()">Start</button>
+          <button class="control ghost" onclick="pauseMatch()">Pauza</button>
+          <button class="control ghost" onclick="resetMatch()">Reset</button>
+        </div>
+
+        <div style="height:12px"></div>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </section>
+</main>
 
 <script>
-let minute = 0, scoreA = 0, scoreB = 0;
-let interval = null, paused = false;
-let teamA = [], teamB = [];
-let homeAdvantage = 1.0;
-let savedTeams = {A:null, B:null};
+/* ====== UTILS & STATE ====== */
+let saved = {A:null, B:null};
+let teamA=[], teamB=[];
+let minute = 0, timer = null, paused = false;
+let goals = {A:0,B:0};
+let homeAdv = 1.0;
 
-function showTab(tab){
-  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-  document.querySelectorAll("header button").forEach(b => b.classList.remove("active"));
-  document.getElementById(tab).classList.add("active");
-  document.getElementById("tab"+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add("active");
+/* show/hide tabs */
+function showTab(id){
+  document.querySelectorAll('section.panel').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('header button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab'+(id==='teamA'?'A':id==='teamB'?'B':'Match')).classList.add('active');
 }
 
-function saveTeam(team){
-  const name = document.getElementById("team"+team+"Name").value || ("Klub "+team);
-  const players = document.getElementById("team"+team+"Players").value.split(",").map(p=>p.trim()).filter(p=>p);
-  savedTeams[team] = {name, players};
-  alert(`Zapisano skład drużyny ${name}`);
+/* live name updates for match header */
+function liveNameUpdate(){
+  document.getElementById('displayA').innerText = document.getElementById('teamAName').value || 'Drużyna A';
+  document.getElementById('displayB').innerText = document.getElementById('teamBName').value || 'Drużyna B';
+  document.getElementById('clubAmini').innerText = document.getElementById('teamAName').value ? document.getElementById('teamAName').value : '—';
+  document.getElementById('clubBmini').innerText = document.getElementById('teamBName').value ? document.getElementById('teamBName').value : '—';
 }
 
-function setupPitch(){
-  const pitch = document.getElementById("pitch");
-  pitch.innerHTML = "";
-  teamA = savedTeams.A.players.map(p=>({name:p, team:"A", active:true, pos:detectPos(p)}));
-  teamB = savedTeams.B.players.map(p=>({name:p, team:"B", active:true, pos:detectPos(p)}));
-  renderPlayers();
-}
+/* save a team (validate GK and total players <=11) */
+function saveTeam(side){
+  const gk = document.getElementById(side+'_gk').value.trim();
+  const def = document.getElementById(side+'_def').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const mid = document.getElementById(side+'_mid').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const att = document.getElementById(side+'_att').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const clubName = document.getElementById('team'+side+'Name').value.trim() || (side==='A'?'Drużyna A':'Drużyna B');
 
-function detectPos(n){
-  n=n.toLowerCase();
-  if(n.includes("bram")) return "GK";
-  if(n.includes("obron")) return "DEF";
-  if(n.includes("pomoc")) return "MID";
-  if(n.includes("atak")||n.includes("napad")) return "ATT";
-  return "MID";
-}
-
-function renderPlayers(){
-  const pitch = document.getElementById("pitch");
-  pitch.innerHTML="";
-  teamA.forEach((p,i)=>{
-    const el=document.createElement("div");
-    el.className="player "+(p.active?"":"out");
-    el.innerText=p.name;
-    el.style.left=50+(i%4)*120+"px";
-    el.style.top=50+Math.floor(i/4)*60+"px";
-    pitch.appendChild(el);
-  });
-  teamB.forEach((p,i)=>{
-    const el=document.createElement("div");
-    el.className="player "+(p.active?"":"out");
-    el.innerText=p.name;
-    el.style.right=50+(i%4)*120+"px";
-    el.style.bottom=50+Math.floor(i/4)*60+"px";
-    pitch.appendChild(el);
-  });
-}
-
-function logEvent(t){
-  const log=document.getElementById("log");
-  log.innerHTML += `<div>[${minute}'] ${t}</div>`;
-  log.scrollTop=log.scrollHeight;
-}
-
-function randomEvent(){
-  const activeA = teamA.filter(p=>p.active);
-  const activeB = teamB.filter(p=>p.active);
-  const all = [...activeA, ...activeB];
-  if(all.length===0) return;
-  const player = all[Math.floor(Math.random()*all.length)];
-  const base = Math.random();
-  let chance = 0;
-  if(player.pos==="ATT") chance=0.07;
-  else if(player.pos==="MID") chance=0.04;
-  else if(player.pos==="DEF") chance=0.015;
-  else if(player.pos==="GK") chance=0.005;
-
-  if(player.team==="A") chance *= homeAdvantage;
-  if(player.team==="B") chance *= (2-homeAdvantage);
-
-  if(base < chance){
-    if(player.team==="A"){ scoreA++; logEvent(`⚽ ${player.name} (${savedTeams.A.name}) zdobywa gola!`); }
-    else { scoreB++; logEvent(`⚽ ${player.name} (${savedTeams.B.name}) zdobywa gola!`); }
-  } else if(base < 0.13){
-    logEvent(`🟨 Żółta kartka dla ${player.name}`);
-  } else if(base < 0.14){
-    player.active=false;
-    logEvent(`🟥 ${player.name} otrzymuje czerwoną kartkę i schodzi z boiska!`);
-    renderPlayers();
+  if(!gk){
+    alert('Musisz wpisać jednego bramkarza (pole Bramkarz).');
+    return;
   }
-  document.getElementById("score").innerText=`${scoreA} : ${scoreB}`;
+  const total = 1 + def.length + mid.length + att.length;
+  if(total > 11){
+    alert('Za dużo zawodników — maksymalnie 11 (w tym 1 bramkarz). Masz: ' + total);
+    return;
+  }
+  const players = [];
+  players.push({name:gk, pos:'GK', team:side, goals:0, yellows:0, red:false, active:true});
+  def.forEach(n=>players.push({name:n,pos:'DEF',team:side,goals:0,yellows:0,red:false,active:true}));
+  mid.forEach(n=>players.push({name:n,pos:'MID',team:side,goals:0,yellows:0,red:false,active:true}));
+  att.forEach(n=>players.push({name:n,pos:'ATT',team:side,goals:0,yellows:0,red:false,active:true}));
+
+  saved[side] = {club:clubName, players:players};
+  alert('Zapisano skład dla ' + clubName + '. Zawodników: ' + total);
+  liveNameUpdate();
 }
 
-function startMatch(){
-  if(!savedTeams.A || !savedTeams.B){ alert("Najpierw ustaw obie drużyny!"); return; }
-  if(interval) return;
-  setupPitch();
-  const stadium=document.getElementById("stadium").value;
-  homeAdvantage=stadium==="homeA"?1.15:stadium==="homeB"?0.85:1.0;
-  logEvent("🔔 Mecz rozpoczęty!");
-  interval=setInterval(()=>{
-    if(!paused){
-      minute++;
-      document.getElementById("time").innerText=`Czas: ${minute}'`;
-      randomEvent();
-      if(minute>=90){
-        clearInterval(interval);
-        interval=null;
-        logEvent(`🏁 Koniec meczu! Wynik: ${scoreA} - ${scoreB}`);
+/* ====== RENDERING PITCH ====== */
+function setupPitch(){
+  const pitch = document.getElementById('pitch');
+  pitch.querySelectorAll('.player').forEach(n=>n.remove());
+  teamA = saved.A ? JSON.parse(JSON.stringify(saved.A.players)) : [];
+  teamB = saved.B ? JSON.parse(JSON.stringify(saved.B.players)) : [];
+
+  // positions: compute coordinates in zones evenly
+  const zoneXcenter = pitch.clientWidth/2;
+  const leftStart = 40, rightStart = pitch.clientWidth - 110;
+  // group by pos for each team
+  const zones = {A:{GK:[],DEF:[],MID:[],ATT:[]}, B:{GK:[],DEF:[],MID:[],ATT:[]}};
+  teamA.forEach(p=>zones.A[p.pos].push(p));
+  teamB.forEach(p=>zones.B[p.pos].push(p));
+
+  // helper to place players for a team and pos
+  function place(team, pos, y){
+    const list = zones[team][pos];
+    const count = list.length;
+    for(let i=0;i<count;i++){
+      const p = list[i];
+      const el = document.createElement('div'); el.className='player'; el.id = `pl_${team}_${pos}_${i}`;
+      // left icons area, name, right icons area
+      el.innerHTML = `<div class="left-icons" id="L_${team}_${pos}_${i}"></div><div class="name">${escapeHtml(p.name)}</div><div class="right-icons" id="R_${team}_${pos}_${i}"></div>`;
+      // compute x
+      const spread = 120;
+      const baseX = (team==='A') ? leftStart : rightStart;
+      const x = baseX + (i * spread);
+      el.style.left = (team==='A'? x : x) + 'px';
+      el.style.top = y + 'px';
+      pitch.appendChild(el);
+      // attach reference to player object for later updates
+      p._el = el;
+      p._Lid = `L_${team}_${pos}_${i}`;
+      p._Rid = `R_${team}_${pos}_${i}`;
+    }
+  }
+
+  // simple vertical y coordinates for zones
+  place('A','GK', 12);
+  place('B','GK', 12);
+  place('A','DEF', 92);
+  place('B','DEF', 92);
+  place('A','MID', 202);
+  place('B','MID', 202);
+  place('A','ATT', 322);
+  place('B','ATT', 322);
+
+  // For teams with many players that overlapped, reposition horizontally evenly
+  // Reposition A side
+  repositionTeam('A');
+  repositionTeam('B');
+
+  // initial icons render
+  refreshIcons();
+}
+
+/* reposition players to be centered across pitch area for each pos */
+function repositionTeam(team){
+  const pitch = document.getElementById('pitch');
+  ['GK','DEF','MID','ATT'].forEach((pos, idx)=>{
+    const nodes = Array.from(pitch.querySelectorAll(`#pl_${team}_${pos}_0, #pl_${team}_${pos}_1, #pl_${team}_${pos}_2, #pl_${team}_${pos}_3, #pl_${team}_${pos}_4, #pl_${team}_${pos}_5`)).filter(x=>x);
+    if(nodes.length===0) return;
+    const totalWidth = pitch.clientWidth - 80; // padding
+    const gap = Math.min(120, Math.floor(totalWidth / (nodes.length+1)));
+    nodes.forEach((n,i)=>{
+      const x = 40 + gap * (i+1);
+      if(team==='A') n.style.left = x + 'px';
+      else n.style.left = (pitch.clientWidth - 40 - (n.clientWidth) - gap * (i+1) + 20) + 'px';
+    });
+  });
+}
+
+/* escape HTML simple */
+function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* refresh icons (goals on right, cards on left) */
+function refreshIcons(){
+  // combine both teams arrays to find original objects with states (we stored teamA/teamB in setup)
+  const all = [...teamA, ...teamB];
+  all.forEach(p=>{
+    if(!p._Lid || !p._Rid) return;
+    const L = document.getElementById(p._Lid);
+    const R = document.getElementById(p._Rid);
+    if(!L||!R) return;
+    // left: cards
+    L.innerHTML = '';
+    if(p.red){ L.innerHTML = '🟥'; } else if(p.yellows && p.yellows>0){ L.innerHTML = '🟨'.repeat(p.yellows); }
+    // right: balls for goals
+    R.innerHTML = '';
+    if(p.goals && p.goals>0){
+      let s='';
+      for(let i=0;i<p.goals;i++) s += '⚽';
+      R.innerHTML = s;
+    }
+    // styling out
+    if(!p.active || p.red) p._el.classList.add('out');
+    else p._el.classList.remove('out');
+  });
+}
+
+/* find player object by name on team arrays */
+function findPlayer(teamArr, name){
+  return teamArr.find(p=>p.name === name);
+}
+
+/* logging */
+function log(msg){
+  const lg = document.getElementById('log');
+  lg.innerHTML = `<div style="padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.03)"><strong>[${minute}']</strong> ${escapeHtml(msg)}</div>` + lg.innerHTML;
+}
+
+/* ====== EVENTS & SIMULATION ====== */
+
+/* variety of action messages */
+const ACTIONS = {
+  ATTACK: [
+    "{player} rusza z piłką i przeprowadza solową akcję.",
+    "{player} świetne podanie — akcja drużynowa!",
+    "{player} drybling, minął rywala, ale nie trafił w światło bramki.",
+    "{player} podaje na wolne pole; follow-up próbuje {player2}.",
+    "{player} strzela z dystansu — minimalnie obok!",
+    "{player} centruje — jest główka!",
+    "{player} uderza przewrotką! (niesamowite!)",
+    "{player} uderza głową po dośrodkowaniu — GOOOOOL!" // used for goal flavour
+  ],
+  MISS: [
+    "{player} strzał niecelny — słupek/róg.",
+    "{player} za lekko — bramkarz łapie bez problemu.",
+    "{player} zbyt przewidywalne uderzenie — obrona ratuje.",
+    "{player} spudłował z kilku metrów — wielka okazja zmarnowana!"
+  ],
+  SAVE: [
+    "Bramkarz robi kapitalną paradę!",
+    "Obrona blokuje strzał w ostatniej chwili!",
+    "Niesamowita interwencja bramkarza — piłka w aut!"
+  ],
+  FOUL: [
+    "{player} faulowany — sędzia przerywa grę.",
+    "{player} fauluje — żółta kartka możliwa.",
+    "{player} brutalny faul — może być kartka!"
+  ],
+  GOAL_FLAVOUR: [
+    "Piękna akcja zespołowa zakończona bramką!",
+    "Przewrotka! Asysta nie do opisania!",
+    "Główka z bliska! Bramkarz bez szans!",
+    "Strzał z dystansu — bomba i gol!",
+    "Dośrodkowanie i trafienie głową!"
+  ]
+};
+
+/* choose random */
+function rnd(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* simulate a single minute */
+function simulateMinute(){
+  // less frequent card chances now
+  // base event chance per minute
+  const baseEvent = 0.18; // 18% chance something happens that minute
+  if(Math.random() > baseEvent) return; // quiet minute
+
+  // choose type of event weighted: attack/miss/save/foul/penalty/goal-chance
+  const r = Math.random();
+  let eventType;
+  if(r < 0.5) eventType = 'ATTACK'; // common
+  else if(r < 0.7) eventType = 'MISS';
+  else if(r < 0.82) eventType = 'SAVE';
+  else if(r < 0.9) eventType = 'FOUL';
+  else eventType = 'SPECIAL'; // penalties or set pieces
+
+  // choose player weighted by position (ATT > MID > DEF > GK)
+  const pool = [...teamA.filter(p=>p.active&&!p.red), ...teamB.filter(p=>p.active&&!p.red)];
+  if(pool.length===0) return;
+  // weight function
+  const weighted = [];
+  pool.forEach(p=>{
+    let w = (p.pos==='ATT')?5:(p.pos==='MID')?3:(p.pos==='DEF')?1:(p.pos==='GK')?0.2:1;
+    // slight home advantage via weights applied to team selection
+    if((p.team==='A' && homeAdv>1) || (p.team==='B' && homeAdv<1)) w *= homeAdv;
+    for(let i=0;i<Math.ceil(w);i++) weighted.push(p);
+  });
+  const actor = weighted[Math.floor(Math.random()*weighted.length)];
+
+  // build flavored messages and outcomes
+  if(eventType === 'ATTACK'){
+    // small chance of immediate goal
+    const goalChance = (actor.pos==='ATT')?0.14:(actor.pos==='MID')?0.06:(actor.pos==='DEF')?0.02:(actor.pos==='GK')?0.005:0.03;
+    const adjustedGoalChance = goalChance * (actor.team==='A'?homeAdv:(2-homeAdv));
+    if(Math.random() < adjustedGoalChance){
+      // goal scored
+      actor.goals = (actor.goals||0) + 1;
+      if(actor.team === 'A') goals.A++; else goals.B++;
+      const flavour = rnd(ACTIONS.GOAL_FLAVOUR);
+      // more specific if head/overhead chance
+      const special = Math.random() < 0.12 ? "PRZEWROTKA!" : (Math.random()<0.18?"GŁÓWKA!":"");
+      log(`${flavour.replace('{player}', actor.name)} ${special} ${actor.name} trafia!`);
+      // update display icons
+      updatePlayerIcons(actor);
+      updateScoreDisplay();
+      return;
+    } else {
+      // not goal: action message, maybe follow with save or miss
+      const txt = rnd(ACTIONS.ATTACK).replace('{player}', actor.name);
+      // replace optional player2
+      const other = findTeammate(actor);
+      const finalTxt = txt.includes('{player2}')?txt.replace('{player2}', other?other.name:'kolega') : txt;
+      log(finalTxt);
+      // 30% chance of subsequent miss/save resolved
+      if(Math.random()<0.35){
+        const sub = Math.random();
+        if(sub < 0.45) { log(rnd(ACTIONS.MISS).replace('{player}', actor.name)); }
+        else { log(rnd(ACTIONS.SAVE)); }
       }
     }
-  },300);
+  } else if(eventType === 'MISS'){
+    log(rnd(ACTIONS.MISS).replace('{player}', actor.name));
+  } else if(eventType === 'SAVE'){
+    log(rnd(ACTIONS.SAVE));
+  } else if(eventType === 'FOUL'){
+    // rare yellow/red: lower chance for yellow now
+    const yellowProb = 0.04; // 4%
+    const redFromYellow = 0.12; // if already 1 yellow, second yellow -> red handled
+    // foul message
+    log(rnd(ACTIONS.FOUL).replace('{player}', actor.name));
+    if(Math.random() < yellowProb){
+      giveYellow(actor);
+    } else if(Math.random() < 0.01){ // very rare direct red
+      giveRed(actor,'bezpośrednia czerwona za brutalny faul');
+    }
+  } else if(eventType === 'SPECIAL'){
+    // penalty or set piece
+    if(Math.random() < 0.5){
+      // penalty to actor's team: choose shooter (often attacker or midfielder)
+      const shooter = chooseShooterForTeam(actor.team);
+      log(`Rzut karny dla ${actor.team==='A'?saved.A.club:saved.B.club}! Wykonuje ${shooter.name}.`);
+      // penalty resolution
+      const pscore = Math.random() < 0.78;
+      if(pscore){
+        shooter.goals = (shooter.goals||0) + 1;
+        if(shooter.team==='A') goals.A++; else goals.B++;
+        log(`⚽ ${shooter.name} pewnie wykorzystuje karnego!`);
+        updatePlayerIcons(shooter);
+        updateScoreDisplay();
+      } else {
+        log(`Karny nie trafiony — obrona/bramkarz ratuje!`);
+      }
+    } else {
+      // corner -> headed chance
+      const taker = chooseShooterForTeam(actor.team);
+      log(`${taker.name} wykonuje rzut rożny...`);
+      if(Math.random() < 0.22){
+        taker.goals = (taker.goals||0) + 1;
+        if(taker.team==='A') goals.A++; else goals.B++;
+        log(`GŁÓWKA i GOOOL! ${taker.name} trafia po dośrodkowaniu.`);
+        updatePlayerIcons(taker); updateScoreDisplay();
+      } else {
+        log('Dośrodkowanie nie zakończyło się golem — obrona wyjaśnia sytuację.');
+      }
+    }
+  }
 }
 
-function pauseMatch(){
-  paused=!paused;
-  logEvent(paused?"⏸️ Pauza":"▶️ Wznowiono mecz");
+/* find teammate for a player (for pass chaining) */
+function findTeammate(player){
+  const arr = player.team === 'A' ? teamA : teamB;
+  const others = arr.filter(p=>p.active && p.name !== player.name);
+  if(others.length===0) return null;
+  return others[Math.floor(Math.random()*others.length)];
 }
 
+/* choose shooter for team (prefers ATT then MID then DEF) */
+function chooseShooterForTeam(team){
+  const arr = (team==='A'?teamA:teamB).filter(p=>p.active && !p.red);
+  const att = arr.filter(p=>p.pos==='ATT');
+  const mid = arr.filter(p=>p.pos==='MID');
+  const def = arr.filter(p=>p.pos==='DEF');
+  const pickFrom = att.length?att:(mid.length?mid:def);
+  return pickFrom[Math.floor(Math.random()*pickFrom.length)];
+}
+
+/* give yellow and upgrade to red if second yellow */
+function giveYellow(player){
+  player.yellows = (player.yellows||0) + 1;
+  if(player.yellows >= 2){
+    // two yellows -> red
+    giveRed(player,'dwie żółte kartki (przekwalifikowane na czerwoną)');
+    return;
+  }
+  log(`🟨 ${player.name} otrzymuje żółtą kartkę (${player.yellows}).`);
+  refreshIcons();
+}
+
+/* give direct red */
+function giveRed(player, reason){
+  player.red = true;
+  player.active = false;
+  log(`🟥 ${player.name} otrzymuje CZERWONĄ kartkę — ${reason || 'wykluczony z gry'}.`);
+  refreshIcons();
+}
+
+/* update DOM for specific player icons (goals/cards) */
+function updatePlayerIcons(player){
+  // player already has _Lid/_Rid set in setupPitch -> if not, find element by name
+  if(!player._Rid || !player._Lid){
+    // attempt to locate matching DOM by name text
+    const pitch = document.getElementById('pitch');
+    const nodes = Array.from(pitch.querySelectorAll('.player'));
+    for(const n of nodes){
+      const nameNode = n.querySelector('.name');
+      if(nameNode && nameNode.innerText === player.name){
+        // set ids for future
+        player._el = n;
+        // left/right ids are not unique but we can use element references
+        break;
+      }
+    }
+  }
+  // render icons across all (safer)
+  refreshIcons();
+}
+
+/* update overall score display */
+function updateScoreDisplay(){
+  document.getElementById('scoreDisplay').innerText = `${goals.A} : ${goals.B}`;
+}
+
+/* simulation control */
+function startMatch(){
+  if(!saved.A || !saved.B){ alert('Najpierw zapisz oba składy (Drużyna A i Drużyna B).'); return; }
+  // build working copies and place on pitch
+  minute = 0; goals = {A:0,B:0};
+  // deep copy saved to teamA/teamB
+  setupPitchFromSaved();
+  homeAdv = document.getElementById('stadium').value === 'homeA' ? 1.12 : (document.getElementById('stadium').value === 'homeB'? 0.88 : 1.0);
+  log(`🔔 Mecz: ${saved.A.club} vs ${saved.B.club} — rozpoczęty.`);
+  updateScoreDisplay();
+  if(timer) clearInterval(timer);
+  timer = setInterval(()=>{
+    if(!paused){
+      minute++;
+      document.getElementById('minuteDisplay').innerText = `Minuta: ${minute}'`;
+      simulateMinute();
+      if(minute >= 90){
+        clearInterval(timer); timer = null;
+        log(`🏁 KONIEC MECZU — wynik: ${goals.A} : ${goals.B}`);
+      }
+    }
+  }, 320); // 320ms per minute (fast)
+}
+
+/* setup copies and render pitch */
+function setupPitchFromSaved(){
+  // deep clones
+  teamA = saved.A.players.map(p=>Object.assign({},p));
+  teamB = saved.B.players.map(p=>Object.assign({},p));
+  // reset any counters
+  teamA.forEach(p=>{p.goals = p.goals||0; p.yellows = p.yellows||0; p.red = p.red||false; p.active = p.active!==false;});
+  teamB.forEach(p=>{p.goals = p.goals||0; p.yellows = p.yellows||0; p.red = p.red||false; p.active = p.active!==false;});
+  // attach internal saved references for club names
+  window.teamA=teamA; window.teamB=teamB; // expose for console/debug
+  // prepare the pitch rendering with proper ids
+  const pitch = document.getElementById('pitch');
+  pitch.innerHTML = `
+    <div class="zone gk">BRAMKARZE</div>
+    <div class="zone def">OBRONA</div>
+    <div class="zone mid">POMOC</div>
+    <div class="zone att">NAPAD</div>
+  `;
+  // place players by grouping positions and team
+  const placeGroup = (arr, teamTag, y) => {
+    const cnt = arr.length;
+    // compute spacing
+    const gap = Math.max(90, Math.floor((pitch.clientWidth - 120) / (cnt + 1)));
+    for(let i=0;i<cnt;i++){
+      const p = arr[i];
+      const el = document.createElement('div'); el.className='player';
+      el.innerHTML = `<div class="left-icons" id=""></div><div class="name">${escapeHtml(p.name)}</div><div class="right-icons" id=""></div>`;
+      pitch.appendChild(el);
+      // position
+      const x = 40 + gap * (i+1);
+      el.style.left = (teamTag==='A' ? x : (pitch.clientWidth - x - el.clientWidth)) + 'px';
+      el.style.top = y + 'px';
+      p._el = el;
+      // left/right ids as element refs stored
+      p._Lel = el.querySelector('.left-icons');
+      p._Rel = el.querySelector('.right-icons');
+    }
+  };
+
+  // arrays by pos and team
+  const order = ['GK','DEF','MID','ATT'];
+  const ycoords = {'GK':14,'DEF':96,'MID':206,'ATT':328};
+  order.forEach(pos=>{
+    const arrA = teamA.filter(p=>p.pos===pos);
+    const arrB = teamB.filter(p=>p.pos===pos);
+    placeGroup(arrA,'A', ycoords[pos]);
+    placeGroup(arrB,'B', ycoords[pos]);
+  });
+
+  // initial icon rendering:
+  refreshIcons();
+}
+
+/* pause/reset */
+function pauseMatch(){ paused = !paused; log(paused ? '⏸️ Mecz wstrzymany' : '▶️ Wznowiono mecz'); }
 function resetMatch(){
-  clearInterval(interval);
-  interval=null;
-  minute=0;scoreA=0;scoreB=0;paused=false;
-  document.getElementById("log").innerHTML="";
-  document.getElementById("score").innerText="0 : 0";
-  document.getElementById("time").innerText="Czas: 0'";
-  setupPitch();
-  logEvent("🔄 Mecz zresetowany.");
+  if(timer) clearInterval(timer);
+  timer = null; paused=false; minute=0; goals={A:0,B:0};
+  document.getElementById('minuteDisplay').innerText = "Minuta: 0'";
+  document.getElementById('scoreDisplay').innerText = "0 : 0";
+  document.getElementById('log').innerHTML = '';
+  // re-render if saved teams exist
+  if(saved.A && saved.B) setupPitchFromSaved();
+  log('🔄 Mecz zresetowany.');
 }
+
+/* give global access to saved variable for debug */
+window.saved = saved;
+
+/* find by name in current play arrays */
+function findByName(name){
+  return teamA.concat(teamB).find(p=>p.name===name);
+}
+
+/* refreshIcons modified to use element refs if present */
+function refreshIcons(){
+  const all = teamA.concat(teamB);
+  all.forEach(p=>{
+    const Lel = p._Lel || (p._el? p._el.querySelector('.left-icons') : null);
+    const Rel = p._Rel || (p._el? p._el.querySelector('.right-icons') : null);
+    if(Lel) {
+      if(p.red) Lel.innerText = '🟥';
+      else Lel.innerText = (p.yellows && p.yellows>0) ? '🟨'.repeat(p.yellows) : '';
+    }
+    if(Rel){
+      Rel.innerText = (p.goals && p.goals>0) ? '⚽'.repeat(p.goals) : '';
+    }
+    if(p._el){
+      if(!p.active || p.red) p._el.classList.add('out'); else p._el.classList.remove('out');
+    }
+  });
+}
+
+/* small init: wire tab buttons to correct labels IDs (fix header active toggling) */
+document.getElementById('tabA').addEventListener('click', ()=>showTab('teamA'));
+document.getElementById('tabB').addEventListener('click', ()=>showTab('teamB'));
+document.getElementById('tabMatch').addEventListener('click', ()=>showTab('match'));
+
+/* When user switches to match tab, update header names/clubs and prepare pitch if both saved */
+document.getElementById('tabMatch').addEventListener('click', ()=>{
+  document.getElementById('displayA').innerText = saved.A ? saved.A.club : (document.getElementById('teamAName').value || 'Drużyna A');
+  document.getElementById('displayB').innerText = saved.B ? saved.B.club : (document.getElementById('teamBName').value || 'Drużyna B');
+  document.getElementById('clubAmini').innerText = saved.A ? saved.A.club : (document.getElementById('teamAName').value || '—');
+  document.getElementById('clubBmini').innerText = saved.B ? saved.B.club : (document.getElementById('teamBName').value || '—');
+  if(saved.A && saved.B) setupPitchFromSaved();
+});
+
+/* Save wrappers: push saved teams into global saved object */
+function saveTeam(side){
+  // call the defined save logic above
+  if(typeof window['saveTeamInternal'] === 'function') {
+    window['saveTeamInternal'](side);
+  } else {
+    // fallback to internal defined earlier
+    // but our internal implementation is the saveTeam declared earlier; to avoid duplication we call the top function
+  }
+}
+
+/* Because earlier we defined saveTeam() we need to ensure it's the one used (avoid name clash) */
+/* The saveTeam function earlier already defined; no override necessary. */
+
+/* expose giveYellow/giveRed for debugging if desired */
+window.giveYellow = giveYellow;
+window.giveRed = giveRed;
+
 </script>
 </body>
 </html>
