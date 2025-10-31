@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Symulator meczu FIFA 2D</title>
+<title>Symulator Meczu 2D</title>
 <style>
   body {
-    background: radial-gradient(circle at center, #084, #031);
+    background: radial-gradient(circle at center, #064, #031);
     color: #fff;
     font-family: "Poppins", sans-serif;
     text-align: center;
@@ -53,10 +53,10 @@
   }
   #pitch {
     position: relative;
-    width: 700px;
-    height: 400px;
+    width: 800px;
+    height: 450px;
     margin: 15px auto;
-    background: linear-gradient(to bottom, #006600, #004400);
+    background: linear-gradient(to bottom, #006a00, #004d00);
     border: 3px solid white;
     border-radius: 10px;
   }
@@ -64,9 +64,7 @@
     position: absolute;
     background: white;
   }
-  .center-line {
-    width: 2px; height: 100%; left: 50%; top: 0;
-  }
+  .center-line { width: 2px; height: 100%; left: 50%; top: 0; }
   .circle {
     width: 80px; height: 80px;
     border: 2px solid white;
@@ -74,22 +72,43 @@
     position: absolute;
     top: calc(50% - 40px); left: calc(50% - 40px);
   }
+  .penalty-box {
+    position: absolute;
+    width: 150px;
+    height: 250px;
+    border: 2px solid white;
+    top: 100px;
+  }
+  .left-box { left: 0; border-left: none; }
+  .right-box { right: 0; border-right: none; }
+
   .player {
     position: absolute;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid white;
-    border-radius: 5px;
-    width: 80px;
-    padding: 2px;
-    font-size: 0.7rem;
+    text-align: center;
   }
-  .out { opacity: 0.5; text-decoration: line-through; }
+  .shirt {
+    width: 35px; height: 35px;
+    border-radius: 50%;
+    background: #ff0000;
+    margin: 0 auto;
+    border: 2px solid white;
+  }
+  .shirt.B { background: #0044ff; }
+  .name {
+    font-size: 0.7rem;
+    margin-top: 3px;
+  }
+  .out .shirt {
+    opacity: 0.3;
+  }
   .cards, .goals {
     position: absolute;
-    top: 0; font-size: 0.9rem;
+    top: 5px;
+    font-size: 0.9rem;
   }
-  .cards { left: -20px; }
-  .goals { right: -20px; }
+  .cards { left: -25px; }
+  .goals { right: -25px; }
+
   #score { font-size: 2rem; margin-top: 10px; }
   #time { margin: 10px; }
   .log {
@@ -97,8 +116,8 @@
     border-radius: 10px;
     padding: 10px;
     width: 90%;
-    max-width: 650px;
-    height: 220px;
+    max-width: 700px;
+    height: 230px;
     overflow-y: auto;
     margin: 0 auto;
     text-align: left;
@@ -153,13 +172,15 @@
   <div id="pitch">
     <div class="line center-line"></div>
     <div class="circle"></div>
+    <div class="penalty-box left-box"></div>
+    <div class="penalty-box right-box"></div>
   </div>
   <div id="log" class="log"></div>
 </section>
 
 <script>
-let savedTeams = {A:null,B:null}, teamA=[], teamB=[];
-let scoreA=0,scoreB=0,minute=0,interval=null,paused=false,homeAdvantage=1.0;
+let savedTeams={A:null,B:null},teamA=[],teamB=[];
+let scoreA=0,scoreB=0,minute=0,interval=null,paused=false;
 
 function showTab(tab){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
@@ -174,121 +195,106 @@ function saveTeam(t){
   const def=document.getElementById(`team${t}Def`).value.split(",").map(x=>x.trim()).filter(x=>x);
   const mid=document.getElementById(`team${t}Mid`).value.split(",").map(x=>x.trim()).filter(x=>x);
   const att=document.getElementById(`team${t}Att`).value.split(",").map(x=>x.trim()).filter(x=>x);
-  const all=[...gk,...def,...mid,...att];
-  if(all.length>11){ alert("Maksymalnie 11 zawodników!"); return; }
-  savedTeams[t]={name, gk, def, mid, att};
+  savedTeams[t]={name,gk,def,mid,att};
   alert("Zapisano skład: "+name);
 }
 
 function setupPitch(){
   const pitch=document.getElementById("pitch");
-  pitch.innerHTML='<div class="line center-line"></div><div class="circle"></div>';
-  teamA=[]; teamB=[];
-  buildTeam(savedTeams.A, teamA, true);
-  buildTeam(savedTeams.B, teamB, false);
+  pitch.innerHTML=`
+    <div class='line center-line'></div>
+    <div class='circle'></div>
+    <div class='penalty-box left-box'></div>
+    <div class='penalty-box right-box'></div>`;
+  teamA=[];teamB=[];
+  buildTeam(savedTeams.A,teamA,true);
+  buildTeam(savedTeams.B,teamB,false);
   renderPlayers();
 }
-function buildTeam(tObj, arr, left){
-  const {gk,def,mid,att}=tObj;
-  const add=(name,pos)=>{
-    arr.push({name,pos,team:left?"A":"B",yellow:0,red:false,goals:0,active:true});
-  }
+function buildTeam(teamObj,arr,left){
+  const {gk,def,mid,att}=teamObj;
+  const add=(n,pos)=>arr.push({name:n,pos,team:left?"A":"B",yellow:0,red:false,goals:0,active:true});
   gk.forEach(p=>add(p,"GK"));
   def.forEach(p=>add(p,"DEF"));
   mid.forEach(p=>add(p,"MID"));
   att.forEach(p=>add(p,"ATT"));
 }
-
 function renderPlayers(){
   const pitch=document.getElementById("pitch");
-  function draw(team, left){
-    const layerY={"GK":330,"DEF":240,"MID":150,"ATT":60};
-    const startX=left?80:620;
-    const dir=left?1:-1;
+  const layers={"GK":370,"DEF":290,"MID":190,"ATT":100};
+  function draw(team,left){
+    const xBase=left?150:650;
+    const dir=left?-1:1;
     let i=0;
     team.forEach(p=>{
-      const el=document.createElement("div");
-      el.className="player "+(p.active?"":"out");
-      el.style.top=layerY[p.pos]+"px";
-      el.style[left?"left":"right"]=(startX+(i%4)*dir*90)+"px";
-      el.innerText=p.name;
+      const player=document.createElement("div");
+      player.className="player "+(p.active?"":"out");
+      player.style.top=layers[p.pos]+"px";
+      player.style.left=(xBase+dir*(i%4)*70)+"px";
+      const shirt=document.createElement("div");
+      shirt.className="shirt "+(p.team==="B"?"B":"A");
+      const name=document.createElement("div");
+      name.className="name"; name.textContent=p.name;
       const cards=document.createElement("div");
-      cards.className="cards";
-      cards.innerText=p.red?"🟥":"🟨".repeat(p.yellow);
+      cards.className="cards"; cards.textContent=p.red?"🟥":"🟨".repeat(p.yellow);
       const goals=document.createElement("div");
-      goals.className="goals";
-      goals.innerText="⚽".repeat(p.goals);
-      el.appendChild(cards);
-      el.appendChild(goals);
-      pitch.appendChild(el);
+      goals.className="goals"; goals.textContent="⚽".repeat(p.goals);
+      player.append(cards,shirt,goals,name);
+      pitch.appendChild(player);
       i++;
     });
   }
   draw(teamA,true);
   draw(teamB,false);
 }
-
 function logEvent(t){
   const log=document.getElementById("log");
   log.innerHTML+=`<div>[${minute}'] ${t}</div>`;
   log.scrollTop=log.scrollHeight;
 }
-
 function randomEvent(){
   const all=[...teamA.filter(p=>p.active),...teamB.filter(p=>p.active)];
-  if(all.length===0)return;
+  if(!all.length)return;
   const p=all[Math.floor(Math.random()*all.length)];
   const r=Math.random();
-  if(r<0.04){ // akcja nieudana
-    const akcje=["świetne podanie, ale strzał niecelny",
-      "drybling i... tuż obok!",
-      "uderzenie z dystansu, minimalnie obok!",
-      "próba przewrotki, ale nie trafia czysto!",
-      "piękne podanie, ale bramkarz łapie!",
-      "groźna sytuacja, strzał zablokowany!"];
-    logEvent(`${p.name} (${p.team}) ${akcje[Math.floor(Math.random()*akcje.length)]}`);
-  } else if(r<0.09){ // gol
-    const typy=["uderzenie z dystansu!","główka!","przewrotka!","piękna akcja zespołowa!","mocny strzał pod poprzeczkę!"];
-    logEvent(`⚽ ${p.name} (${p.team}) ${typy[Math.floor(Math.random()*typy.length)]}`);
-    p.goals++;
-    if(p.team==="A")scoreA++; else scoreB++;
-  } else if(r<0.12){ // żółta kartka rzadziej
+  const akcje=["świetne podanie, ale nie trafia!","groźna sytuacja, strzał zablokowany!","mocny strzał obok słupka!",
+               "błyskotliwy drybling, ale za długo zwleka!","płaski strzał, ale bramkarz broni!"];
+  const gole=["z dystansu!","główką!","po przewrotce!","piękna akcja drużyny!","mocny strzał pod poprzeczkę!"];
+  if(r<0.05) logEvent(`${p.name} (${p.team}) ${akcje[Math.floor(Math.random()*akcje.length)]}`);
+  else if(r<0.09){
+    p.goals++; if(p.team==="A")scoreA++; else scoreB++;
+    logEvent(`⚽ ${p.name} (${p.team}) ${gole[Math.floor(Math.random()*gole.length)]}`);
+  }
+  else if(r<0.11){
     if(p.red||!p.active)return;
     p.yellow++;
-    if(p.yellow>=2){ p.red=true; p.active=false; logEvent(`🟥 ${p.name} (druga żółta - wylatuje!)`); }
+    if(p.yellow>=2){p.red=true;p.active=false;logEvent(`🟥 ${p.name} (druga żółta - wylatuje!)`);}
     else logEvent(`🟨 ${p.name} otrzymuje żółtą kartkę`);
   }
   document.getElementById("score").innerText=`${scoreA} : ${scoreB}`;
   renderPlayers();
 }
-
 function startMatch(){
-  if(!savedTeams.A||!savedTeams.B){ alert("Ustaw obie drużyny!"); return; }
+  if(!savedTeams.A||!savedTeams.B){alert("Ustaw obie drużyny!");return;}
   if(interval)return;
   setupPitch();
-  const stadium=document.getElementById("stadium").value;
-  homeAdvantage=stadium==="homeA"?1.1:stadium==="homeB"?0.9:1.0;
   logEvent("🔔 Mecz rozpoczęty!");
   interval=setInterval(()=>{
     if(!paused){
       minute++;
       document.getElementById("time").innerText=`Czas: ${minute}'`;
       randomEvent();
-      if(minute>=90){
-        clearInterval(interval);
-        interval=null;
-        logEvent(`🏁 Koniec meczu! Wynik: ${scoreA} - ${scoreB}`);
-      }
+      if(minute>=90){clearInterval(interval);interval=null;logEvent(`🏁 Koniec meczu! Wynik: ${scoreA}-${scoreB}`);}
     }
   },300);
 }
-function pauseMatch(){ paused=!paused; logEvent(paused?"⏸️ Pauza":"▶️ Wznowiono mecz"); }
+function pauseMatch(){paused=!paused;logEvent(paused?"⏸️ Pauza":"▶️ Wznowiono");}
 function resetMatch(){
   clearInterval(interval);interval=null;minute=0;scoreA=0;scoreB=0;paused=false;
   document.getElementById("score").innerText="0 : 0";
   document.getElementById("time").innerText="Czas: 0'";
   document.getElementById("log").innerHTML="";
-  document.getElementById("pitch").innerHTML='<div class="line center-line"></div><div class="circle"></div>';
+  setupPitch();
 }
 </script>
 </body>
