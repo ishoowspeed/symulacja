@@ -36,7 +36,7 @@
   section { display: none; padding: 20px; }
   section.active { display: block; }
 
-  input, textarea, select, button {
+  input, select, button {
     margin: 5px;
     padding: 8px;
     border-radius: 8px;
@@ -59,6 +59,7 @@
     background: linear-gradient(to bottom, #006a00, #004d00);
     border: 3px solid white;
     border-radius: 10px;
+    overflow: hidden;
   }
   .line {
     position: absolute;
@@ -211,6 +212,7 @@ function setupPitch(){
   buildTeam(savedTeams.B,teamB,false);
   renderPlayers();
 }
+
 function buildTeam(teamObj,arr,left){
   const {gk,def,mid,att}=teamObj;
   const add=(n,pos)=>arr.push({name:n,pos,team:left?"A":"B",yellow:0,red:false,goals:0,active:true});
@@ -219,39 +221,48 @@ function buildTeam(teamObj,arr,left){
   mid.forEach(p=>add(p,"MID"));
   att.forEach(p=>add(p,"ATT"));
 }
+
 function renderPlayers(){
   const pitch=document.getElementById("pitch");
   const layers={"GK":370,"DEF":290,"MID":190,"ATT":100};
+  pitch.querySelectorAll(".player").forEach(p=>p.remove());
+  
   function draw(team,left){
-    const xBase=left?150:650;
-    const dir=left?-1:1;
-    let i=0;
-    team.forEach(p=>{
-      const player=document.createElement("div");
-      player.className="player "+(p.active?"":"out");
-      player.style.top=layers[p.pos]+"px";
-      player.style.left=(xBase+dir*(i%4)*70)+"px";
-      const shirt=document.createElement("div");
-      shirt.className="shirt "+(p.team==="B"?"B":"A");
-      const name=document.createElement("div");
-      name.className="name"; name.textContent=p.name;
-      const cards=document.createElement("div");
-      cards.className="cards"; cards.textContent=p.red?"🟥":"🟨".repeat(p.yellow);
-      const goals=document.createElement("div");
-      goals.className="goals"; goals.textContent="⚽".repeat(p.goals);
-      player.append(cards,shirt,goals,name);
-      pitch.appendChild(player);
-      i++;
+    const layerKeys=["GK","DEF","MID","ATT"];
+    layerKeys.forEach(layer=>{
+      const players=team.filter(p=>p.pos===layer);
+      const y=layers[layer];
+      const spacing=players.length>1?200/(players.length-1):0;
+      const xStart=left?100:700;
+      players.forEach((p,i)=>{
+        const x=left?(xStart+i*spacing):(xStart-i*spacing);
+        const div=document.createElement("div");
+        div.className="player "+(p.active?"":"out");
+        div.style.top=y+"px";
+        div.style.left=x+"px";
+        const cards=document.createElement("div");
+        cards.className="cards"; cards.textContent=p.red?"🟥":"🟨".repeat(p.yellow);
+        const goals=document.createElement("div");
+        goals.className="goals"; goals.textContent="⚽".repeat(p.goals);
+        const shirt=document.createElement("div");
+        shirt.className="shirt "+p.team;
+        const name=document.createElement("div");
+        name.className="name"; name.textContent=p.name;
+        div.append(cards,shirt,goals,name);
+        pitch.appendChild(div);
+      });
     });
   }
   draw(teamA,true);
   draw(teamB,false);
 }
+
 function logEvent(t){
   const log=document.getElementById("log");
   log.innerHTML+=`<div>[${minute}'] ${t}</div>`;
   log.scrollTop=log.scrollHeight;
 }
+
 function randomEvent(){
   const all=[...teamA.filter(p=>p.active),...teamB.filter(p=>p.active)];
   if(!all.length)return;
@@ -274,6 +285,7 @@ function randomEvent(){
   document.getElementById("score").innerText=`${scoreA} : ${scoreB}`;
   renderPlayers();
 }
+
 function startMatch(){
   if(!savedTeams.A||!savedTeams.B){alert("Ustaw obie drużyny!");return;}
   if(interval)return;
@@ -288,6 +300,7 @@ function startMatch(){
     }
   },300);
 }
+
 function pauseMatch(){paused=!paused;logEvent(paused?"⏸️ Pauza":"▶️ Wznowiono");}
 function resetMatch(){
   clearInterval(interval);interval=null;minute=0;scoreA=0;scoreB=0;paused=false;
