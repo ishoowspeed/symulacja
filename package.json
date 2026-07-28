@@ -1,7 +1,7 @@
 {
-  "name": "chat-app-v2",
+  "name": "elite-chat-app",
   "version": "2.0.0",
-  "description": "Czat z prywatnymi wiadomościami, rozszerzonymi statusami i obsługą mobilną",
+  "description": "Czat ELITE z powiadomieniami nieprzeczytanych wiadomości",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

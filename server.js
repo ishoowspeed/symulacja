@@ -66,7 +66,7 @@ async function initDb() {
 }
 initDb();
 
-// Helper: ustalenie efektywnego statusu (jeśli brak socketu -> Offline)
+// Helper: ustalenie efektywnego statusu
 function getEffectiveStatus(user) {
   if (!activeSockets.has(user.id)) {
     return 'Offline';
