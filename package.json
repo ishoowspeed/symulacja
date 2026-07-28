@@ -1,13 +1,14 @@
 {
-  "name": "render-neon-app",
+  "name": "discord-clone-neon",
   "version": "1.0.0",
-  "description": "Aplikacja z trwała baza danych Neon.tech na Render.com",
+  "description": "Discord clone z czatem w czasie rzeczywistym i baza Neon.tech na Render.com",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "ws": "^8.14.2"
   }
 }

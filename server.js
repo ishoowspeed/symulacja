@@ -1,13 +1,17 @@
 const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
 const { Pool } = require('pg');
 const path = require('path');
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Polaczenie z baza Neon pobierane ze zmiennej środowiskowej DATABASE_URL
+// Polaczenie z baza Neon.tech pobierane ze zmiennej DATABASE_URL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -15,7 +19,7 @@ const pool = new Pool({
   }
 });
 
-// Tworzenie tabeli automatycznie przy starcie, jesli jeszcze nie istnieje
+// Automatyczna inicjalizacja tabel w bazie danych (uzytkownicy i wiadomosci czatu)
 async function initDb() {
   try {
     await pool.query(`
@@ -25,8 +29,15 @@ async function initDb() {
         password TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) NOT NULL,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-    console.log('Tabela users jest gotowa.');
+    console.log('Baza danych (users + messages) jest gotowa.');
   } catch (err) {
     console.error('Blad podczas inicjalizacji bazy danych:', err);
   }
@@ -46,9 +57,9 @@ app.post('/api/register', async (req, res) => {
       'INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id, username',
       [username, password]
     );
-    res.status(201).json({ success: true, message: 'Konto utworzone pomyslnie!', user: result.rows[0] });
+    res.status(201).json({ success: true, message: 'Konto utworzone!', user: result.rows[0] });
   } catch (err) {
-    if (err.code === '23505') { // Unikalnosc nazwy uzytkownika
+    if (err.code === '23505') {
       return res.status(400).json({ success: false, message: 'Uzytkownik o takiej nazwie juz istnieje.' });
     }
     console.error(err);
@@ -77,7 +88,53 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Endpoint Pobierania Historii Wiadomosci
+app.get('/api/messages', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT username, content, created_at FROM messages ORDER BY id ASC LIMIT 100'
+    );
+    res.json({ success: true, messages: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Blad podczas pobierania wiadomosci.' });
+  }
+});
+
+// Obsluga WebSocket dla czatu w czasie rzeczywistym
+wss.on('connection', (ws) => {
+  console.log('Nowy uzytkownik polaczyl sie z czatem WebSocket.');
+
+  ws.on('message', async (data) => {
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed.type === 'message' && parsed.username && parsed.content) {
+        // Zapis do bazy Neon.tech
+        const insertRes = await pool.query(
+          'INSERT INTO messages (username, content) VALUES ($1, $2) RETURNING username, content, created_at',
+          [parsed.username, parsed.content]
+        );
+
+        const newMsg = insertRes.rows[0];
+        const broadcastData = JSON.stringify({
+          type: 'new_message',
+          message: newMsg
+        });
+
+        // Rozeslanie nowej wiadomosci do WSZYSTKICH podlaczonych uzytkownikow
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(broadcastData);
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Blad obslugi wiadomosci WebSocket:', err);
+    }
+  });
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Serwer dziala na porcie ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Serwer Discord Clone dziala na porcie ${PORT}`);
 });

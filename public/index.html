@@ -3,64 +3,147 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aplikacja z Baza Neon.tech</title>
+  <title>Discord Clone - Fioletowy Motyw</title>
   <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-    .card { background: #1e293b; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 400px; border: 1px solid #334155; }
-    h2 { margin-top: 0; color: #38bdf8; text-align: center; font-size: 1.8rem; margin-bottom: 1.5rem; }
-    .tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid #334155; }
-    .tab { flex: 1; text-align: center; padding: 0.75rem; cursor: pointer; color: #94a3b8; font-weight: 600; }
-    .tab.active { color: #38bdf8; border-bottom: 2px solid #38bdf8; margin-bottom: -2px; }
-    .form-group { margin-bottom: 1.25rem; }
-    label { display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-size: 0.9rem; }
-    input { width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 1rem; }
-    input:focus { outline: none; border-color: #38bdf8; }
-    button { width: 100%; padding: 0.75rem; border-radius: 6px; border: none; background: #0284c7; color: white; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: #0369a1; }
-    #message { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; text-align: center; display: none; font-size: 0.9rem; }
-    .success { background: #14532d; color: #4ade80; border: 1px solid #166534; }
-    .error { background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b; }
-    #user-dashboard { display: none; text-align: center; }
-    .welcome-text { font-size: 1.2rem; margin-bottom: 1.5rem; color: #e2e8f0; }
+    * { box-sizing: border-box; font-family: 'gg sans', 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #1e1f29; color: #f2f3f5; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+
+    /* EKRAN LOGOWANIA / REJESTRACJI */
+    .auth-container { background: #2b2d3f; padding: 2.5rem; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); width: 100%; max-width: 420px; border: 1px solid #47326e; text-align: center; }
+    .auth-container h2 { color: #b9bbbe; font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .auth-container p.sub { color: #949ba4; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid #3b3d54; }
+    .tab { flex: 1; padding: 0.75rem; cursor: pointer; color: #949ba4; font-weight: 600; }
+    .tab.active { color: #a855f7; border-bottom: 2px solid #a855f7; margin-bottom: -2px; }
+    .form-group { margin-bottom: 1.25rem; text-align: left; }
+    label { display: block; margin-bottom: 0.5rem; color: #b9bbbe; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+    input { width: 100%; padding: 0.75rem; border-radius: 4px; border: 1px solid #1e1f29; background: #1e1f29; color: white; font-size: 1rem; }
+    input:focus { outline: none; border-color: #a855f7; }
+    button.auth-btn { width: 100%; padding: 0.8rem; border-radius: 4px; border: none; background: #8b5cf6; color: white; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    button.auth-btn:hover { background: #7c3aed; }
+    #message { margin-top: 1rem; padding: 0.75rem; border-radius: 4px; font-size: 0.9rem; display: none; }
+    .success { background: #15803d; color: #4ade80; }
+    .error { background: #991b1b; color: #fca5a5; }
+
+    /* EKRAN CZATU (DISCORD CLONE) */
+    #app-container { display: none; width: 100vw; height: 100vh; flex-row: row; }
+    .sidebar-servers { width: 72px; background-color: #13131a; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; border-right: 1px solid #2b2d3f; }
+    .server-icon { width: 48px; height: 48px; background-color: #2b2d3f; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #a855f7; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 1.2rem; }
+    .server-icon:hover, .server-icon.active { background-color: #8b5cf6; color: white; border-radius: 16px; }
+
+    .sidebar-channels { width: 240px; background-color: #1e1f29; display: flex; flex-direction: column; border-right: 1px solid #2b2d3f; }
+    .server-header { padding: 16px; font-weight: bold; color: white; border-bottom: 1px solid #2b2d3f; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; }
+    .channels-list { padding: 10px 8px; flex: 1; }
+    .channel-item { padding: 8px 12px; border-radius: 4px; color: #949ba4; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+    .channel-item:hover, .channel-item.active { background-color: #2b2d3f; color: #f2f3f5; }
+    .user-panel { padding: 12px; background-color: #13131a; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2b2d3f; }
+    .user-info { display: flex; align-items: center; gap: 8px; }
+    .avatar { width: 32px; height: 32px; background-color: #8b5cf6; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.9rem; }
+    .username-text { font-weight: bold; font-size: 0.9rem; color: #f2f3f5; }
+    .logout-btn { background: none; border: none; color: #949ba4; cursor: pointer; font-size: 0.8rem; }
+    .logout-btn:hover { color: #fca5a5; }
+
+    .chat-area { flex: 1; background-color: #2b2d3f; display: flex; flex-direction: column; }
+    .chat-header { height: 50px; border-bottom: 1px solid #1e1f29; display: flex; align-items: center; padding: 0 16px; font-weight: bold; gap: 8px; color: white; }
+    .chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .message-item { display: flex; gap: 12px; }
+    .message-avatar { width: 40px; height: 40px; background-color: #7c3aed; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; flex-shrink: 0; }
+    .message-content-box { display: flex; flex-direction: column; }
+    .message-author { font-weight: bold; color: #c084fc; font-size: 0.95rem; margin-bottom: 2px; }
+    .message-time { font-size: 0.75rem; color: #949ba4; font-weight: normal; margin-left: 8px; }
+    .message-text { color: #dcddde; font-size: 0.95rem; line-height: 1.4; word-break: break-word; }
+
+    .chat-input-area { padding: 16px; background-color: #2b2d3f; }
+    .chat-input-wrapper { background-color: #1e1f29; border-radius: 8px; padding: 0 12px; display: flex; align-items: center; border: 1px solid #47326e; }
+    .chat-input { width: 100%; padding: 12px 0; background: transparent; border: none; color: white; font-size: 1rem; }
+    .chat-input:focus { outline: none; }
+    .send-btn { background: #8b5cf6; border: none; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-left: 8px; }
+    .send-btn:hover { background: #7c3aed; }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <div id="auth-box">
-      <div class="tabs">
-        <div class="tab active" onclick="switchTab('login')">Logowanie</div>
-        <div class="tab" onclick="switchTab('register')">Rejestracja</div>
+  <!-- EKRAN AUTORYZACJI -->
+  <div class="auth-container" id="auth-box">
+    <h2>Witaj ponownie!</h2>
+    <p class="sub">Discord Clone - Motyw Fioletowy</p>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')">Logowanie</div>
+      <div class="tab" onclick="switchTab('register')">Rejestracja</div>
+    </div>
+
+    <form onsubmit="handleSubmit(event)">
+      <div class="form-group">
+        <label>Nazwa użytkownika</label>
+        <input type="text" id="username" required autocomplete="username">
       </div>
-
-      <form id="auth-form" onsubmit="handleSubmit(event)">
-        <div class="form-group">
-          <label for="username">Nazwa użytkownika</label>
-          <input type="text" id="username" required autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label for="password">Hasło</label>
-          <input type="password" id="password" required autocomplete="current-password">
-        </div>
-        <button type="submit" id="submit-btn">Zaloguj się</button>
-      </form>
-    </div>
-
-    <div id="user-dashboard">
-      <h2>Witaj w aplikacji!</h2>
-      <p class="welcome-text">Zalogowano jako: <strong id="logged-username" style="color: #38bdf8;"></strong></p>
-      <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1.5rem;">
-        Twoje dane są bezpiecznie przechowywane w bazie Neon.tech. Nawet jeśli Render zrestartuje serwer, pozostaniesz w bazie!
-      </p>
-      <button onclick="logout()" style="background: #475569;">Wyloguj się</button>
-    </div>
+      <div class="form-group">
+        <label>Hasło</label>
+        <input type="password" id="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="auth-btn" id="submit-btn">Zaloguj się</button>
+    </form>
 
     <div id="message"></div>
   </div>
 
+  <!-- EKRAN GŁÓWNY DISCORDA -->
+  <div id="app-container">
+    <!-- Kolumna Serwerów -->
+    <div class="sidebar-servers">
+      <div class="server-icon active">D</div>
+      <div class="server-icon">+</div>
+    </div>
+
+    <!-- Kolumna Kanałów -->
+    <div class="sidebar-channels">
+      <div class="server-header">
+        <span>Fioletowy Serwer</span>
+      </div>
+      <div class="channels-list">
+        <div class="channel-item active">
+          <span style="font-size: 1.2rem; color: #a855f7;">#</span> ogólny
+        </div>
+        <div class="channel-item">
+          <span style="font-size: 1.2rem; color: #949ba4;">#</span> rozmowy
+        </div>
+      </div>
+      <div class="user-panel">
+        <div class="user-info">
+          <div class="avatar" id="user-avatar">U</div>
+          <span class="username-text" id="logged-username">Użytkownik</span>
+        </div>
+        <button class="logout-btn" onclick="logout()">Wyloguj</button>
+      </div>
+    </div>
+
+    <!-- Główny Czat -->
+    <div class="chat-area">
+      <div class="chat-header">
+        <span style="font-size: 1.4rem; color: #a855f7;">#</span>
+        <span>ogólny</span>
+      </div>
+
+      <div class="chat-messages" id="messages-container">
+        <!-- Wiadomości będą ładowane dynamicznie -->
+      </div>
+
+      <div class="chat-input-area">
+        <form onsubmit="sendMessage(event)">
+          <div class="chat-input-wrapper">
+            <input type="text" class="chat-input" id="message-input" placeholder="Napisz na #ogólny..." autocomplete="off">
+            <button type="submit" class="send-btn">Wyślij</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script>
     let mode = 'login';
+    let currentUser = null;
+    let ws = null;
 
     function switchTab(newMode) {
       mode = newMode;
@@ -93,7 +176,6 @@
 
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
-
       const endpoint = mode === 'register' ? '/api/register' : '/api/login';
 
       try {
@@ -110,9 +192,8 @@
             showMessage(data.message + ' Możesz się teraz zalogować.');
             switchTab('login');
           } else {
-            document.getElementById('auth-box').style.display = 'none';
-            document.getElementById('user-dashboard').style.display = 'block';
-            document.getElementById('logged-username').innerText = data.user.username;
+            currentUser = data.user;
+            enterDiscordApp();
           }
         } else {
           showMessage(data.message || 'Wystąpił błąd', true);
@@ -122,8 +203,103 @@
       }
     }
 
+    async function enterDiscordApp() {
+      document.getElementById('auth-box').style.display = 'none';
+      const appContainer = document.getElementById('app-container');
+      appContainer.style.display = 'flex';
+
+      document.getElementById('logged-username').innerText = currentUser.username;
+      document.getElementById('user-avatar').innerText = currentUser.username.charAt(0).toUpperCase();
+
+      // Pobranie historii wiadomości z bazy danych
+      await loadMessageHistory();
+
+      // Połączenie z czatem w czasie rzeczywistym via WebSocket
+      connectWebSocket();
+    }
+
+    async function loadMessageHistory() {
+      try {
+        const res = await fetch('/api/messages');
+        const data = await res.json();
+        if (data.success) {
+          const container = document.getElementById('messages-container');
+          container.innerHTML = '';
+          data.messages.forEach(msg => appendMessageUI(msg));
+          scrollToBottom();
+        }
+      } catch (err) {
+        console.error('Błąd pobierania historii:', err);
+      }
+    }
+
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'new_message') {
+          appendMessageUI(data.message);
+          scrollToBottom();
+        }
+      };
+
+      ws.onclose = () => {
+        // Automatyczne ponawianie połączenia
+        setTimeout(connectWebSocket, 3000);
+      };
+    }
+
+    function appendMessageUI(msg) {
+      const container = document.getElementById('messages-container');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message-item';
+
+      const initial = msg.username ? msg.username.charAt(0).toUpperCase() : '?';
+      const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+      msgDiv.innerHTML = `
+        <div class="message-avatar">${initial}</div>
+        <div class="message-content-box">
+          <div>
+            <span class="message-author">${msg.username}</span>
+            <span class="message-time">${timeStr}</span>
+          </div>
+          <div class="message-text">${escapeHtml(msg.content)}</div>
+        </div>
+      `;
+
+      container.appendChild(msgDiv);
+    }
+
+    function sendMessage(event) {
+      event.preventDefault();
+      const input = document.getElementById('message-input');
+      const content = input.value.trim();
+
+      if (content && ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'message',
+          username: currentUser.username,
+          content: content
+        }));
+        input.value = '';
+      }
+    }
+
+    function scrollToBottom() {
+      const container = document.getElementById('messages-container');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
     function logout() {
-      document.getElementById('user-dashboard').style.display = 'none';
+      if (ws) ws.close();
+      document.getElementById('app-container').style.display = 'none';
       document.getElementById('auth-box').style.display = 'block';
       document.getElementById('username').value = '';
       document.getElementById('password').value = '';
