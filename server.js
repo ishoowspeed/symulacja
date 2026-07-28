@@ -11,7 +11,7 @@ const wss = new WebSocket.Server({ server });
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Polaczenie z baza Neon.tech pobierane ze zmiennej DATABASE_URL
+// Połączenie z bazą Neon.tech
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -19,7 +19,7 @@ const pool = new Pool({
   }
 });
 
-// Automatyczna inicjalizacja tabel w bazie danych (uzytkownicy i wiadomosci czatu)
+// Automatyczna inicjalizacja tabel w bazie danych
 async function initDb() {
   try {
     await pool.query(`
@@ -27,6 +27,7 @@ async function initDb() {
         id SERIAL PRIMARY KEY,
         username VARCHAR(50) UNIQUE NOT NULL,
         password TEXT NOT NULL,
+        status VARCHAR(20) DEFAULT 'Online',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -37,9 +38,15 @@ async function initDb() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log('Baza danych (users + messages) jest gotowa.');
+    
+    // Dodanie kolumny status, jeśli nie istnieje w starszej wersji bazy
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'Online';
+    `);
+
+    console.log('Baza danych jest gotowa.');
   } catch (err) {
-    console.error('Blad podczas inicjalizacji bazy danych:', err);
+    console.error('Błąd podczas inicjalizacji bazy danych:', err);
   }
 }
 initDb();
@@ -49,21 +56,21 @@ app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
-    return res.status(400).json({ success: false, message: 'Podaj nazwe uzytkownika i haslo.' });
+    return res.status(400).json({ success: false, message: 'Podaj nazwę użytkownika i hasło.' });
   }
 
   try {
     const result = await pool.query(
-      'INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id, username',
-      [username, password]
+      'INSERT INTO users (username, password, status) VALUES ($1, $2, $3) RETURNING id, username, status',
+      [username, password, 'Online']
     );
-    res.status(201).json({ success: true, message: 'Konto utworzone!', user: result.rows[0] });
+    res.status(201).json({ success: true, message: 'Konto utworzone pomyślnie!', user: result.rows[0] });
   } catch (err) {
     if (err.code === '23505') {
-      return res.status(400).json({ success: false, message: 'Uzytkownik o takiej nazwie juz istnieje.' });
+      return res.status(400).json({ success: false, message: 'Użytkownik o takiej nazwie już istnieje.' });
     }
     console.error(err);
-    res.status(500).json({ success: false, message: 'Blad serwera podczas rejestracji.' });
+    res.status(500).json({ success: false, message: 'Błąd serwera podczas rejestracji.' });
   }
 });
 
@@ -73,22 +80,70 @@ app.post('/api/login', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT id, username FROM users WHERE username = $1 AND password = $2',
+      'SELECT id, username, status FROM users WHERE username = $1 AND password = $2',
       [username, password]
     );
 
     if (result.rows.length > 0) {
-      res.json({ success: true, message: 'Zalogowano pomyslnie!', user: result.rows[0] });
+      res.json({ success: true, message: 'Zalogowano pomyślnie!', user: result.rows[0] });
     } else {
-      res.status(401).json({ success: false, message: 'Nieprawidlowy login lub haslo.' });
+      res.status(401).json({ success: false, message: 'Nieprawidłowy login lub hasło.' });
     }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'Blad serwera podczas logowania.' });
+    res.status(500).json({ success: false, message: 'Błąd serwera podczas logowania.' });
   }
 });
 
-// Endpoint Pobierania Historii Wiadomosci
+// Endpoint Aktualizacji Profilu (Nazwa, Hasło, Status)
+app.post('/api/update-profile', async (req, res) => {
+  const { userId, newUsername, newPassword, newStatus } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ success: false, message: 'Brak ID użytkownika.' });
+  }
+
+  try {
+    // Sprawdzenie, czy nowa nazwa użytkownika nie jest zajęta przez kogoś innego
+    if (newUsername) {
+      const checkUser = await pool.query(
+        'SELECT id FROM users WHERE username = $1 AND id != $2',
+        [newUsername, userId]
+      );
+      if (checkUser.rows.length > 0) {
+        return res.status(400).json({ success: false, message: 'Ta nazwa użytkownika jest już zajęta.' });
+      }
+    }
+
+    // Pobranie obecnych danych użytkownika
+    const currentRes = await pool.query('SELECT username, password, status FROM users WHERE id = $1', [userId]);
+    if (currentRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Użytkownik nie istnieje.' });
+    }
+
+    const current = currentRes.rows[0];
+    const usernameToSet = newUsername && newUsername.trim() !== '' ? newUsername.trim() : current.username;
+    const passwordToSet = newPassword && newPassword.trim() !== '' ? newPassword.trim() : current.password;
+    const statusToSet = newStatus || current.status;
+
+    // Jeżeli zmieniła się nazwa użytkownika, zaktualizujmy też autora w tabeli messages dla spójności
+    if (usernameToSet !== current.username) {
+      await pool.query('UPDATE messages SET username = $1 WHERE username = $2', [usernameToSet, current.username]);
+    }
+
+    const updatedRes = await pool.query(
+      'UPDATE users SET username = $1, password = $2, status = $3 WHERE id = $4 RETURNING id, username, status',
+      [usernameToSet, passwordToSet, statusToSet, userId]
+    );
+
+    res.json({ success: true, message: 'Profil zaktualizowany pomyślnie!', user: updatedRes.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Błąd podczas aktualizacji profilu.' });
+  }
+});
+
+// Endpoint Pobierania Historii Wiadomości
 app.get('/api/messages', async (req, res) => {
   try {
     const result = await pool.query(
@@ -97,19 +152,16 @@ app.get('/api/messages', async (req, res) => {
     res.json({ success: true, messages: result.rows });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'Blad podczas pobierania wiadomosci.' });
+    res.status(500).json({ success: false, message: 'Błąd podczas pobierania wiadomości.' });
   }
 });
 
-// Obsluga WebSocket dla czatu w czasie rzeczywistym
+// WebSocket dla czatu w czasie rzeczywistym
 wss.on('connection', (ws) => {
-  console.log('Nowy uzytkownik polaczyl sie z czatem WebSocket.');
-
   ws.on('message', async (data) => {
     try {
       const parsed = JSON.parse(data);
       if (parsed.type === 'message' && parsed.username && parsed.content) {
-        // Zapis do bazy Neon.tech
         const insertRes = await pool.query(
           'INSERT INTO messages (username, content) VALUES ($1, $2) RETURNING username, content, created_at',
           [parsed.username, parsed.content]
@@ -121,7 +173,6 @@ wss.on('connection', (ws) => {
           message: newMsg
         });
 
-        // Rozeslanie nowej wiadomosci do WSZYSTKICH podlaczonych uzytkownikow
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(broadcastData);
@@ -129,12 +180,12 @@ wss.on('connection', (ws) => {
         });
       }
     } catch (err) {
-      console.error('Blad obslugi wiadomosci WebSocket:', err);
+      console.error('Błąd WebSocket:', err);
     }
   });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Serwer Discord Clone dziala na porcie ${PORT}`);
+  console.log(`Serwer działa na porcie ${PORT}`);
 });
