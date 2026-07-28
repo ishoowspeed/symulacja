@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELITE Communicator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <!-- Modal logowania / wyboru nicku -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="logo">ELITE</div>
+            <h2>Wpisz swój pseudonim</h2>
+            <form id="login-form">
+                <input type="text" id="username-input" placeholder="Twój nick..." maxlength="20" required autocomplete="off">
+                <button type="submit">Wejdź do ELITE</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Główny układ komunikatora -->
+    <div class="app-container">
+        
+        <!-- Pasek boczny (Sidebar) -->
+        <aside class="sidebar">
+            <div class="server-header">
+                <span class="server-title">ELITE</span>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title">KANAŁY TEKSTOWE</div>
+                <button class="channel-btn active" id="btn-channel-main">
+                    <span class="hashtag">#</span> GŁÓWNY
+                </button>
+            </div>
+
+            <div class="sidebar-section dms-section">
+                <div class="section-title-row">
+                    <span class="section-title">WIADOMOŚCI PRYWATNE</span>
+                    <button id="btn-add-dm" title="Napisz do kogoś">+</button>
+                </div>
+                <div id="dm-list" class="dm-list">
+                    <!-- Prywatne rozmowy będą tutaj dodawane -->
+                </div>
+            </div>
+
+            <!-- Profil użytkownika na dole paska -->
+            <div class="user-profile">
+                <div class="avatar" id="my-avatar">E</div>
+                <div class="user-details">
+                    <div class="username" id="my-username">Ładowanie...</div>
+                    <div class="user-id" id="my-userid" title="Kliknij, aby skopiować ID">ID: ---</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Główny panel czatu -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <span class="hashtag" id="chat-type-icon">#</span>
+                <span class="chat-title" id="chat-title-name">GŁÓWNY</span>
+                <span class="chat-desc" id="chat-title-desc">Oficjalny główny kanał tekstowy</span>
+            </header>
+
+            <div class="messages-container" id="messages-container">
+                <div class="welcome-banner">
+                    <h1 id="banner-title">Witaj na kanale #GŁÓWNY!</h1>
+                    <p id="banner-sub">To jest początek kanału #GŁÓWNY serwera ELITE.</p>
+                </div>
+                <!-- Wiadomości wpadają tutaj -->
+            </div>
+
+            <form class="message-form" id="message-form">
+                <input type="text" id="message-input" placeholder="Napisz wiadomość na #GŁÓWNY..." autocomplete="off">
+                <button type="submit">Wyślij</button>
+            </form>
+        </main>
+    </div>
+
+    <!-- Modal dodawania rozmowy prywatnej -->
+    <div id="dm-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h2>Rozpocznij konwersację</h2>
+            <p class="modal-desc">Podaj ID użytkownika (np. ELITE-A1B2C3), do którego chcesz napisać:</p>
+            <form id="dm-form">
+                <input type="text" id="target-id-input" placeholder="Wklej ID użytkownika..." required autocomplete="off">
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" id="btn-close-dm-modal">Anuluj</button>
+                    <button type="submit">Otwórz czat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Powiadomienie Toast -->
+    <div id="toast" class="toast hidden">ID skopiowane do schowka!</div>
+
+    <script src="app.js"></script>
+</body>
+</html>
