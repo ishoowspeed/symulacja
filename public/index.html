@@ -4,73 +4,318 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ELITE</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: #1e293b;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+
+        /* Header section with ELITE branding */
+        .chat-header {
+            background: #0f172a;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+        }
+
+        .chat-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #38bdf8;
+            text-transform: uppercase;
+        }
+
+        .badge-elite {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: #ffffff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
+        }
+
+        /* Messages area */
+        .messages-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #1e293b;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .message.incoming {
+            background: #334155;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .message.outgoing {
+            background: #2563eb;
+            color: #ffffff;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message.system {
+            align-self: center;
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            font-size: 0.8rem;
+            font-style: italic;
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+
+        .message-meta {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .message-time {
+            font-size: 0.65rem;
+            opacity: 0.6;
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        /* Input section */
+        .chat-input-container {
+            padding: 16px;
+            background: #0f172a;
+            border-top: 1px solid #334155;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: #ffffff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: #38bdf8;
+        }
+
+        .send-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .send-btn:hover {
+            background: #1d4ed8;
+        }
+
+        /* Nickname modal */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .login-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            text-align: center;
+            width: 320px;
+        }
+
+        .login-box h2 {
+            margin-bottom: 15px;
+            color: #38bdf8;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            outline: none;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .login-box button:hover {
+            background: #1d4ed8;
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Main Chat Area (Channels sidebar removed as requested) -->
-        <main class="chat-main">
-            <!-- Top Header -->
-            <header class="chat-header">
-                <div class="header-left">
-                    <div class="brand-logo">
-                        <i class="fa-solid fa-crown"></i>
-                    </div>
-                    <div class="title-container">
-                        <h1 class="app-title">ELITE</h1>
-                        <div class="status-badge">
-                            <span class="status-dot"></span>
-                            <span class="status-text">ELITE ACTIVE</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <button class="icon-btn" title="Powiadomienia"><i class="fa-regular fa-bell"></i></button>
-                    <button class="icon-btn" title="Ustawienia"><i class="fa-solid fa-gear"></i></button>
-                    <div class="user-profile">
-                        <div class="avatar">E</div>
-                        <span class="username">Użytkownik</span>
-                    </div>
-                </div>
-            </header>
 
-            <!-- Chat Messages Window -->
-            <section class="messages-container" id="messagesContainer">
-                <div class="system-message">
-                    <span class="system-badge"><i class="fa-solid fa-shield-halved"></i> Witamy w ELITE</span>
-                    <p>Połączenie szyfrowane end-to-end ustanowione.</p>
-                </div>
-
-                <div class="message incoming">
-                    <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
-                    <div class="msg-content-wrapper">
-                        <div class="msg-author">System ELITE <span class="badge-elite">ELITE</span></div>
-                        <div class="msg-bubble">
-                            Witaj w aplikacji <strong>ELITE</strong>! Panele boczne zostały usunięte, a nagłówek zaktualizowany zgodnie z wytycznymi.
-                        </div>
-                        <div class="msg-time">12:00</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Message Input Area -->
-            <footer class="chat-input-area">
-                <form id="chatForm" onsubmit="sendMessage(event)">
-                    <div class="input-wrapper">
-                        <button type="button" class="action-btn" title="Załącznik"><i class="fa-solid fa-paperclip"></i></button>
-                        <input type="text" id="messageInput" placeholder="Napisz wiadomość w ELITE..." autocomplete="off" required>
-                        <button type="button" class="action-btn" title="Emoji"><i class="fa-regular fa-face-smile"></i></button>
-                        <button type="submit" class="send-btn" title="Wyślij">
-                            <span>Wyślij</span>
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </form>
-            </footer>
-        </main>
+    <!-- Overlay do wpisania nicku -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <h2>Witaj w ELITE</h2>
+            <input type="text" id="usernameInput" placeholder="Wpisz Twój nick..." autofocus />
+            <button onclick="setUsername()">Wejdź do czatu</button>
+        </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Główny kontener czatu -->
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>ELITE</h1>
+            <span class="badge-elite">ELITE</span>
+        </div>
+
+        <div class="messages-area" id="messagesArea">
+            <div class="message system">Połączono z serwerem czatu ELITE</div>
+        </div>
+
+        <div class="chat-input-container">
+            <input type="text" id="messageInput" class="chat-input" placeholder="Napisz wiadomość..." onkeypress="handleKeyPress(event)" />
+            <button class="send-btn" onclick="sendMessage()">Wyślij</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentUser = '';
+
+        function setUsername() {
+            const input = document.getElementById('usernameInput');
+            const name = input.value.trim();
+            if (name) {
+                currentUser = name;
+                socket.emit('join', currentUser);
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('messageInput').focus();
+            }
+        }
+
+        document.getElementById('usernameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                setUsername();
+            }
+        });
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (text) {
+                socket.emit('chat message', { text: text });
+                input.value = '';
+            }
+        }
+
+        socket.on('chat message', function(data) {
+            const area = document.getElementById('messagesArea');
+            const msgDiv = document.createElement('div');
+            
+            const isSelf = data.user === currentUser;
+            msgDiv.className = 'message ' + (isSelf ? 'outgoing' : 'incoming');
+
+            if (!isSelf) {
+                const meta = document.createElement('div');
+                meta.className = 'message-meta';
+                meta.textContent = data.user;
+                msgDiv.appendChild(meta);
+            }
+
+            const textDiv = document.createElement('div');
+            textDiv.textContent = data.text;
+            msgDiv.appendChild(textDiv);
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = data.time;
+            msgDiv.appendChild(timeDiv);
+
+            area.appendChild(msgDiv);
+            area.scrollTop = area.scrollHeight;
+        });
+
+        socket.on('system message', function(msg) {
+            const area = document.getElementById('messagesArea');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message system';
+            msgDiv.textContent = msg;
+            area.appendChild(msgDiv);
+            area.scrollTop = area.scrollHeight;
+        });
+    </script>
 </body>
 </html>
