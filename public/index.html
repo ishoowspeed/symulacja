@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b0b0f" />
+    <title>ELITE</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="loader" class="loader" aria-label="Ładowanie ELITE">
+      <div class="loader-mark">E</div>
+      <strong>ELITE</strong>
+      <p>Łączenie z rozmową</p>
+      <i></i>
+    </div>
+
+    <main id="app" class="app is-hidden">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="ELITE — czat główny"><span>e</span> ELITE</a>
+        <div class="room"><i></i> # ogólny</div>
+      </header>
+
+      <section id="messages" class="messages" aria-live="polite" aria-label="Wiadomości czatu">
+        <div id="empty-state" class="empty-state">
+          <span>✦</span>
+          <p>Witaj w ELITE</p>
+          <small>Zacznij rozmowę ze swoją ekipą.</small>
+        </div>
+      </section>
+
+      <form id="message-form" class="message-form">
+        <label class="sr-only" for="message-input">Wiadomość</label>
+        <textarea id="message-input" maxlength="500" rows="1" placeholder="Napisz wiadomość..." autocomplete="off"></textarea>
+        <button type="submit" aria-label="Wyślij wiadomość">
+          <span>Wyślij</span><b>↑</b>
+        </button>
+      </form>
+      <div class="input-meta"><span id="character-count">0 / 500</span><span>Enter aby wysłać</span></div>
+    </main>
+
+    <section id="nickname-screen" class="nickname-screen is-hidden" aria-labelledby="nickname-title">
+      <form id="nickname-form" class="nickname-card">
+        <div class="nickname-logo">e</div>
+        <p class="eyebrow">WITAJ W ELITE</p>
+        <h1 id="nickname-title">Jak mamy się do Ciebie zwracać?</h1>
+        <p>Wybierz nick widoczny przy Twoich wiadomościach.</p>
+        <label for="nickname-input">Twój nick</label>
+        <input id="nickname-input" type="text" maxlength="24" placeholder="np. nocny_gracz" autocomplete="nickname" required />
+        <button type="submit">Wejdź do czatu <span>→</span></button>
+      </form>
+    </section>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
