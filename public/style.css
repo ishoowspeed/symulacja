@@ -1,4 +1,4 @@
-/* Discord-inspired clean purple theme for ELITE (Mobile Friendly & LocalStorage persistence) */
+/* ELITE Communicator Theme - Clean, Modern & Material Icons */
 
 :root {
     --bg-primary: #1e1b2e;
@@ -12,6 +12,9 @@
     --text-dark: #6e688a;
     --border-color: #2e284a;
     --danger: #e63946;
+    --status-active: #2ec4b6;
+    --status-dnd: #e63946;
+    --status-offline: #7f8c8d;
     --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -31,6 +34,11 @@ body {
     overflow: hidden;
 }
 
+.material-icons {
+    font-size: 20px;
+    vertical-align: middle;
+}
+
 .app-container {
     display: flex;
     width: 100vw;
@@ -39,7 +47,7 @@ body {
     position: relative;
 }
 
-/* Sidebar Styling */
+/* Sidebar */
 .sidebar {
     width: 260px;
     background-color: var(--bg-secondary);
@@ -68,7 +76,6 @@ body {
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 24px;
     cursor: pointer;
 }
 
@@ -94,20 +101,21 @@ body {
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 20px;
     cursor: pointer;
-    padding: 0 8px;
-    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 
 #btn-add-dm:hover {
     color: var(--text-bright);
+    background-color: var(--bg-tertiary);
 }
 
 .channel-btn, .dm-btn {
     width: 100%;
     display: flex;
     align-items: center;
+    gap: 8px;
     padding: 10px 10px;
     background: none;
     border: none;
@@ -130,23 +138,26 @@ body {
     color: var(--text-bright);
 }
 
-.hashtag {
-    font-size: 18px;
-    font-weight: bold;
-    margin-right: 8px;
-    color: var(--text-dark);
-}
-
-.channel-btn.active .hashtag {
-    color: var(--text-bright);
-}
-
 .dm-list {
     display: flex;
     flex-direction: column;
     gap: 2px;
     max-height: calc(100vh - 240px);
     overflow-y: auto;
+}
+
+.friend-item-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.friend-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* User Profile Footer */
@@ -158,6 +169,12 @@ body {
     align-items: center;
     gap: 10px;
     border-top: 1px solid var(--border-color);
+    position: relative;
+}
+
+.avatar-container {
+    position: relative;
+    flex-shrink: 0;
 }
 
 .avatar {
@@ -170,8 +187,25 @@ body {
     justify-content: center;
     font-weight: bold;
     color: white;
-    flex-shrink: 0;
 }
+
+.status-indicator, .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    border: 2px solid #0f0d1a;
+}
+
+.dot-active, .status-active { background-color: var(--status-active); }
+.dot-dnd, .status-dnd { background-color: var(--status-dnd); }
+.dot-offline, .status-offline { background-color: var(--status-offline); }
 
 .user-details {
     overflow: hidden;
@@ -196,23 +230,69 @@ body {
     text-overflow: ellipsis;
 }
 
-.user-details .user-id:hover {
-    text-decoration: underline;
-}
-
-.logout-btn {
+.icon-btn {
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 16px;
     cursor: pointer;
     padding: 6px;
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    color: var(--text-bright);
+    background-color: var(--bg-tertiary);
 }
 
 .logout-btn:hover {
     color: var(--danger);
     background-color: rgba(230, 57, 70, 0.1);
+}
+
+/* Status Menu Dropdown */
+.status-menu-wrapper {
+    position: relative;
+}
+
+.status-dropdown {
+    position: absolute;
+    bottom: 45px;
+    right: 0;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 170px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    z-index: 200;
+}
+
+.status-dropdown.hidden {
+    display: none;
+}
+
+.status-opt {
+    background: none;
+    border: none;
+    color: var(--text-bright);
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.status-opt:hover {
+    background-color: var(--bg-tertiary);
 }
 
 /* Chat Main Area */
@@ -234,12 +314,15 @@ body {
     gap: 10px;
 }
 
+.header-chat-icon {
+    color: var(--text-dark);
+}
+
 .mobile-menu-btn {
     display: none;
     background: none;
     border: none;
     color: var(--text-bright);
-    font-size: 22px;
     cursor: pointer;
     padding: 4px;
 }
@@ -370,8 +453,10 @@ body {
     color: white;
     border: none;
     border-radius: 8px;
-    padding: 0 18px;
-    font-weight: 600;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
 }
 
@@ -379,7 +464,7 @@ body {
     background-color: var(--accent-purple-hover);
 }
 
-/* Modals & Auth Tabs */
+/* Modals */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;

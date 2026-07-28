@@ -4,30 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ELITE Communicator</title>
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
 
-    <!-- Modal Logowania / Rejestracji z Hasłem -->
+    <!-- Modal Logowania / Rejestracji na Serwerze -->
     <div id="login-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="logo">ELITE</div>
             
-            <!-- Zakładki Logowanie / Rejestracja -->
             <div class="auth-tabs">
                 <button type="button" id="tab-login-btn" class="auth-tab active">Logowanie</button>
                 <button type="button" id="tab-register-btn" class="auth-tab">Rejestracja</button>
             </div>
 
-            <!-- Formularz Logowania -->
             <form id="login-form" class="auth-form">
                 <input type="text" id="login-username" placeholder="Twój nick..." required autocomplete="off">
                 <input type="password" id="login-password" placeholder="Hasło..." required>
                 <button type="submit">Zaloguj się</button>
             </form>
 
-            <!-- Formularz Rejestracji -->
             <form id="register-form" class="auth-form hidden">
                 <input type="text" id="reg-username" placeholder="Twój nowy nick..." maxlength="20" required autocomplete="off">
                 <input type="password" id="reg-password" placeholder="Stwórz hasło..." required>
@@ -37,52 +36,81 @@
         </div>
     </div>
 
-    <!-- Pasek boczny tło dla wersji mobilnej -->
+    <!-- Pasek boczny overlay dla mobile -->
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-    <!-- Główny układ komunikatora -->
     <div class="app-container">
         
-        <!-- Pasek boczny (Sidebar) -->
+        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="server-header">
                 <span class="server-title">ELITE</span>
-                <button class="close-sidebar-btn" id="close-sidebar-btn">&times;</button>
+                <button class="close-sidebar-btn" id="close-sidebar-btn">
+                    <span class="material-icons">close</span>
+                </button>
             </div>
 
             <div class="sidebar-section">
                 <div class="section-title">KANAŁY TEKSTOWE</div>
                 <button class="channel-btn active" id="btn-channel-main">
-                    <span class="hashtag">#</span> GŁÓWNY
+                    <span class="material-icons channel-icon">tag</span> GŁÓWNY
                 </button>
             </div>
 
             <div class="sidebar-section dms-section">
                 <div class="section-title-row">
-                    <span class="section-title">ZNAJOMI / ROZMOWY</span>
-                    <button id="btn-add-dm" title="Napisz do kogoś">+</button>
+                    <span class="section-title">ZNAJOMI</span>
+                    <button id="btn-add-dm" title="Dodaj znajomego">
+                        <span class="material-icons">add</span>
+                    </button>
                 </div>
                 <div id="dm-list" class="dm-list">
-                    <!-- Zapamiętani znajomi i rozmowy z LocalStorage -->
+                    <!-- Lista znajomych pobierana z konta na serwerze -->
                 </div>
             </div>
 
-            <!-- Profil użytkownika z przyciskiem wylogowania -->
+            <!-- Profil użytkownika ze zmianą statusu i wylogowaniem -->
             <div class="user-profile">
-                <div class="avatar" id="my-avatar">E</div>
+                <div class="avatar-container">
+                    <div class="avatar" id="my-avatar">E</div>
+                    <div class="status-indicator status-active" id="my-status-dot"></div>
+                </div>
                 <div class="user-details">
                     <div class="username" id="my-username">Ładowanie...</div>
                     <div class="user-id" id="my-userid" title="Kliknij, aby skopiować swój ID">ID: ---</div>
                 </div>
-                <button id="logout-btn" title="Wyloguj się" class="logout-btn">➔</button>
+                
+                <!-- Wybór Statusu -->
+                <div class="status-menu-wrapper">
+                    <button id="status-toggle-btn" class="icon-btn" title="Zmień status">
+                        <span class="material-icons">settings</span>
+                    </button>
+                    <div id="status-dropdown" class="status-dropdown hidden">
+                        <button type="button" data-status="AKTYWNY" class="status-opt">
+                            <span class="status-dot dot-active"></span> AKTYWNY
+                        </button>
+                        <button type="button" data-status="NIE PRZESZKADZAC" class="status-opt">
+                            <span class="status-dot dot-dnd"></span> NIE PRZESZKADZAC
+                        </button>
+                        <button type="button" data-status="NIEAKTYWNY" class="status-opt">
+                            <span class="status-dot dot-offline"></span> NIEAKTYWNY
+                        </button>
+                    </div>
+                </div>
+
+                <button id="logout-btn" title="Wyloguj się" class="icon-btn logout-btn">
+                    <span class="material-icons">logout</span>
+                </button>
             </div>
         </aside>
 
         <!-- Główny panel czatu -->
         <main class="chat-area">
             <header class="chat-header">
-                <button class="mobile-menu-btn" id="mobile-menu-btn">&#9776;</button>
-                <span class="hashtag" id="chat-type-icon">#</span>
+                <button class="mobile-menu-btn" id="mobile-menu-btn">
+                    <span class="material-icons">menu</span>
+                </button>
+                <span class="material-icons header-chat-icon" id="chat-type-icon">tag</span>
                 <div class="chat-header-info">
                     <span class="chat-title" id="chat-title-name">GŁÓWNY</span>
                     <span class="chat-desc" id="chat-title-desc">Oficjalny główny kanał tekstowy</span>
@@ -94,26 +122,28 @@
                     <h1 id="banner-title">Witaj na kanale #GŁÓWNY!</h1>
                     <p id="banner-sub">To jest początek kanału #GŁÓWNY serwera ELITE.</p>
                 </div>
-                <!-- Wiadomości wpadają tutaj -->
+                <!-- Wiadomości -->
             </div>
 
             <form class="message-form" id="message-form">
                 <input type="text" id="message-input" placeholder="Napisz wiadomość na #GŁÓWNY..." autocomplete="off">
-                <button type="submit">Wyślij</button>
+                <button type="submit">
+                    <span class="material-icons">send</span>
+                </button>
             </form>
         </main>
     </div>
 
-    <!-- Modal dodawania znajomego / rozmowy -->
+    <!-- Modal dodawania znajomego -->
     <div id="dm-modal" class="modal-overlay hidden">
         <div class="modal-box">
-            <h2>Dodaj znajomego / Rozmowę</h2>
-            <p class="modal-desc">Podaj ID użytkownika (np. ELITE-A1B2C3), aby zapisać go w znajomych i pisać PV:</p>
+            <h2>Dodaj znajomego</h2>
+            <p class="modal-desc">Podaj ID użytkownika (np. ELITE-A1B2C3), aby dodać go do swojego konta:</p>
             <form id="dm-form">
                 <input type="text" id="target-id-input" placeholder="Wklej ID użytkownika..." required autocomplete="off">
                 <div class="modal-buttons">
                     <button type="button" class="btn-cancel" id="btn-close-dm-modal">Anuluj</button>
-                    <button type="submit">Dodaj i Otwórz</button>
+                    <button type="submit">Dodaj znajomego</button>
                 </div>
             </form>
         </div>

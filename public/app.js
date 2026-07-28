@@ -1,13 +1,10 @@
 const socket = io();
 
-// LocalStorage Keys
-const STORAGE_USERS_KEY = 'ELITE_REGISTERED_USERS';
-const STORAGE_CURRENT_USER = 'ELITE_LOGGED_USER';
-
 // State
-let loggedUser = null; // { username, userId, password }
+let loggedUser = null; // { userId, username, status, friends: [] }
 let activeChat = { type: 'global', id: 'GŁÓWNY', name: 'GŁÓWNY' };
 const globalMessages = [];
+const localPrivateMessages = {}; // Local session memory only
 
 // DOM Elements - Auth Modal
 const loginModal = document.getElementById('login-modal');
@@ -29,9 +26,13 @@ const mobileMenuBtn = document.getElementById('mobile-menu-btn');
 const closeSidebarBtn = document.getElementById('close-sidebar-btn');
 
 const myAvatar = document.getElementById('my-avatar');
+const myStatusDot = document.getElementById('my-status-dot');
 const myUsernameEl = document.getElementById('my-username');
 const myUseridEl = document.getElementById('my-userid');
 const logoutBtn = document.getElementById('logout-btn');
+
+const statusToggleBtn = document.getElementById('status-toggle-btn');
+const statusDropdown = document.getElementById('status-dropdown');
 
 const btnChannelMain = document.getElementById('btn-channel-main');
 const btnAddDm = document.getElementById('btn-add-dm');
@@ -55,66 +56,7 @@ const targetIdInput = document.getElementById('target-id-input');
 const btnCloseDmModal = document.getElementById('btn-close-dm-modal');
 const toast = document.getElementById('toast');
 
-// --- LOCAL STORAGE HELPERS ---
-
-function getRegisteredUsers() {
-    try {
-        return JSON.parse(localStorage.getItem(STORAGE_USERS_KEY)) || {};
-    } catch {
-        return {};
-    }
-}
-
-function saveRegisteredUsers(users) {
-    localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(users));
-}
-
-function getSavedUserSession() {
-    try {
-        return JSON.parse(localStorage.getItem(STORAGE_CURRENT_USER)) || null;
-    } catch {
-        return null;
-    }
-}
-
-function saveUserSession(user) {
-    localStorage.setItem(STORAGE_CURRENT_USER, JSON.stringify(user));
-}
-
-function clearUserSession() {
-    localStorage.removeItem(STORAGE_CURRENT_USER);
-}
-
-// User-specific storage key for Friends & Messages
-function getUserDataKey(userId) {
-    return `ELITE_DATA_${userId}`;
-}
-
-function getUserPrivateData() {
-    if (!loggedUser) return { friends: {}, messages: {} };
-    try {
-        const raw = localStorage.getItem(getUserDataKey(loggedUser.userId));
-        return raw ? JSON.parse(raw) : { friends: {}, messages: {} };
-    } catch {
-        return { friends: {}, messages: {} };
-    }
-}
-
-function saveUserPrivateData(data) {
-    if (!loggedUser) return;
-    localStorage.setItem(getUserDataKey(loggedUser.userId), JSON.stringify(data));
-}
-
-function generateUserId() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
-    for (let i = 0; i < 6; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return `ELITE-${code}`;
-}
-
-// --- AUTH LOGIC ---
+// --- AUTH LOGIC (Konta zapisywane w pamięci serwera) ---
 
 tabLoginBtn.addEventListener('click', () => {
     tabLoginBtn.classList.add('active');
@@ -141,76 +83,55 @@ function hideAuthError() {
     authError.classList.add('hidden');
 }
 
-// Register Handle
+// Rejestracja konta na serwerze
 registerForm.addEventListener('submit', (e) => {
     e.preventDefault();
     hideAuthError();
-    const nick = regUsernameInput.value.trim();
-    const pass = regPasswordInput.value.trim();
+    const username = regUsernameInput.value.trim();
+    const password = regPasswordInput.value.trim();
 
-    if (!nick || !pass) {
-        showAuthError('Wypełnij wszystkie pola.');
-        return;
-    }
-
-    const users = getRegisteredUsers();
-    // Check if username already exists
-    const existingUser = Object.values(users).find(u => u.username.toLowerCase() === nick.toLowerCase());
-    if (existingUser) {
-        showAuthError('Użytkownik o tym nicku już istnieje.');
-        return;
-    }
-
-    const userId = generateUserId();
-    const newUser = { username: nick, userId, password: pass };
-
-    users[userId] = newUser;
-    saveRegisteredUsers(users);
-
-    loginUserSession(newUser);
+    socket.emit('register', { username, password }, (response) => {
+        if (response.success) {
+            loginUserSession(response.user);
+        } else {
+            showAuthError(response.message);
+        }
+    });
 });
 
-// Login Handle
+// Logowanie na serwerze
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     hideAuthError();
-    const nick = loginUsernameInput.value.trim();
-    const pass = loginPasswordInput.value.trim();
+    const username = loginUsernameInput.value.trim();
+    const password = loginPasswordInput.value.trim();
 
-    const users = getRegisteredUsers();
-    const user = Object.values(users).find(u => u.username.toLowerCase() === nick.toLowerCase());
-
-    if (!user || user.password !== pass) {
-        showAuthError('Nieprawidłowy nick lub hasło.');
-        return;
-    }
-
-    loginUserSession(user);
+    socket.emit('login', { username, password }, (response) => {
+        if (response.success) {
+            loginUserSession(response.user);
+        } else {
+            showAuthError(response.message);
+        }
+    });
 });
 
 function loginUserSession(user) {
     loggedUser = user;
-    saveUserSession(user);
     loginModal.classList.add('hidden');
 
     myUsernameEl.textContent = user.username;
     myUseridEl.textContent = `ID: ${user.userId}`;
     myAvatar.textContent = user.username.charAt(0).toUpperCase();
 
-    // Connect to socket with login data
-    socket.emit('login_user', { userId: user.userId, username: user.username });
-
-    // Load saved friends/conversations list
-    updateDmListUI();
+    updateUserStatusUI(user.status || 'AKTYWNY');
+    loadAndRenderFriends();
     btnChannelMain.click();
 }
 
 logoutBtn.addEventListener('click', () => {
-    clearUserSession();
     location.reload();
 });
 
-// Copy User ID on click
 myUseridEl.addEventListener('click', () => {
     if (loggedUser && loggedUser.userId) {
         navigator.clipboard.writeText(loggedUser.userId);
@@ -225,6 +146,43 @@ function showToast(msg) {
         toast.classList.add('hidden');
     }, 2500);
 }
+
+// --- STATUSES MANAGEMENT ---
+
+statusToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    statusDropdown.classList.toggle('hidden');
+});
+
+document.addEventListener('click', () => {
+    statusDropdown.classList.add('hidden');
+});
+
+document.querySelectorAll('.status-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const newStatus = btn.dataset.status;
+        socket.emit('change_status', newStatus);
+        updateUserStatusUI(newStatus);
+        statusDropdown.classList.add('hidden');
+    });
+});
+
+function updateUserStatusUI(status) {
+    if (!loggedUser) return;
+    loggedUser.status = status;
+    
+    myStatusDot.className = 'status-indicator';
+    if (status === 'AKTYWNY') myStatusDot.classList.add('status-active');
+    else if (status === 'NIE PRZESZKADZAC') myStatusDot.classList.add('status-dnd');
+    else myStatusDot.classList.add('status-offline');
+}
+
+socket.on('user_status_changed', (data) => {
+    // Odśwież listę znajomych jeśli status znajomego się zmienił
+    if (loggedUser && loggedUser.friends.includes(data.userId)) {
+        loadAndRenderFriends();
+    }
+});
 
 // --- MOBILE SIDEBAR TOGGLE ---
 mobileMenuBtn.addEventListener('click', () => {
@@ -247,7 +205,7 @@ btnChannelMain.addEventListener('click', () => {
     btnChannelMain.classList.add('active');
     document.querySelectorAll('.dm-btn').forEach(btn => btn.classList.remove('active'));
     
-    chatTypeIcon.textContent = '#';
+    chatTypeIcon.textContent = 'tag';
     chatTitleName.textContent = 'GŁÓWNY';
     chatTitleDesc.textContent = 'Oficjalny główny kanał tekstowy';
     bannerTitle.textContent = 'Witaj na kanale #GŁÓWNY!';
@@ -258,7 +216,6 @@ btnChannelMain.addEventListener('click', () => {
     closeSidebar();
 });
 
-// Open DM Modal
 btnAddDm.addEventListener('click', () => {
     dmModal.classList.remove('hidden');
     targetIdInput.value = '';
@@ -274,33 +231,47 @@ dmForm.addEventListener('submit', (e) => {
     const targetId = targetIdInput.value.trim().toUpperCase();
     if (!targetId) return;
 
-    if (loggedUser && targetId === loggedUser.userId) {
-        alert('Nie możesz otworzyć prywatnego czatu sam ze sobą.');
-        return;
-    }
-
-    addFriendAndOpen(targetId);
-    dmModal.classList.add('hidden');
+    socket.emit('add_friend', targetId, (res) => {
+        if (res.success) {
+            loggedUser.friends = res.myFriends;
+            loadAndRenderFriends();
+            switchToDm(res.friend.userId, res.friend.username);
+            dmModal.classList.add('hidden');
+        } else {
+            alert(res.message);
+        }
+    });
 });
 
-function addFriendAndOpen(targetUserId) {
-    const data = getUserPrivateData();
-    if (!data.friends[targetUserId]) {
-        data.friends[targetUserId] = { name: targetUserId };
-        if (!data.messages[targetUserId]) {
-            data.messages[targetUserId] = [];
-        }
-        saveUserPrivateData(data);
-    }
-    updateDmListUI();
-    switchToDm(targetUserId);
+function loadAndRenderFriends() {
+    if (!loggedUser || !loggedUser.friends) return;
+
+    socket.emit('get_friends_details', loggedUser.friends, (friendsDetails) => {
+        dmList.innerHTML = '';
+        friendsDetails.forEach(friend => {
+            const btn = document.createElement('button');
+            btn.className = 'dm-btn' + (activeChat.type === 'private' && activeChat.id === friend.userId ? ' active' : '');
+            btn.dataset.userid = friend.userId;
+
+            let dotClass = 'dot-active';
+            if (friend.status === 'NIE PRZESZKADZAC') dotClass = 'dot-dnd';
+            else if (friend.status === 'NIEAKTYWNY') dotClass = 'dot-offline';
+
+            btn.innerHTML = `
+                <div class="friend-item-content">
+                    <span class="status-dot ${dotClass}"></span>
+                    <span class="friend-name">${escapeHtml(friend.username)}</span>
+                </div>
+            `;
+
+            btn.addEventListener('click', () => switchToDm(friend.userId, friend.username));
+            dmList.appendChild(btn);
+        });
+    });
 }
 
-function switchToDm(targetUserId) {
-    const data = getUserPrivateData();
-    const friend = data.friends[targetUserId] || { name: targetUserId };
-
-    activeChat = { type: 'private', id: targetUserId, name: friend.name };
+function switchToDm(targetUserId, targetUsername) {
+    activeChat = { type: 'private', id: targetUserId, name: targetUsername };
 
     btnChannelMain.classList.remove('active');
     document.querySelectorAll('.dm-btn').forEach(btn => {
@@ -311,33 +282,18 @@ function switchToDm(targetUserId) {
         }
     });
 
-    chatTypeIcon.textContent = '@';
-    chatTitleName.textContent = friend.name;
+    chatTypeIcon.textContent = 'alternate_email';
+    chatTitleName.textContent = targetUsername;
     chatTitleDesc.textContent = `Rozmowa prywatna | ID: ${targetUserId}`;
-    bannerTitle.textContent = `Rozmowa z ${friend.name}`;
-    bannerSub.textContent = `Początek prywatnej rozmowy z użytkownikiem ${targetUserId}. Wszystko zapisuje się w Twojej przeglądarce!`;
-    messageInput.placeholder = `Napisz do ${friend.name}...`;
+    bannerTitle.textContent = `Rozmowa z ${targetUsername}`;
+    bannerSub.textContent = `Początek prywatnej rozmowy z użytkownikiem ${targetUsername}.`;
+    messageInput.placeholder = `Napisz do ${targetUsername}...`;
 
     renderMessages();
     closeSidebar();
 }
 
-function updateDmListUI() {
-    dmList.innerHTML = '';
-    const data = getUserPrivateData();
-
-    Object.keys(data.friends).forEach(targetUserId => {
-        const friend = data.friends[targetUserId];
-        const btn = document.createElement('button');
-        btn.className = 'dm-btn' + (activeChat.type === 'private' && activeChat.id === targetUserId ? ' active' : '');
-        btn.dataset.userid = targetUserId;
-        btn.innerHTML = `<span class="hashtag">@</span> ${friend.name}`;
-        btn.addEventListener('click', () => switchToDm(targetUserId));
-        dmList.appendChild(btn);
-    });
-}
-
-// --- MESSAGES HANDLING & LOCALSTORAGE PERSISTENCE ---
+// --- MESSAGES HANDLING ---
 
 messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -356,7 +312,6 @@ messageForm.addEventListener('submit', (e) => {
     messageInput.value = '';
 });
 
-// Receive Global Message
 socket.on('system_message', (data) => {
     globalMessages.push({ isSystem: true, text: data.text, timestamp: data.timestamp });
     if (activeChat.type === 'global') {
@@ -371,36 +326,22 @@ socket.on('new_global_message', (data) => {
     }
 });
 
-// Receive Private Message
 socket.on('new_private_message', (data) => {
     if (!loggedUser) return;
 
     const partnerId = (data.senderId === loggedUser.userId) ? data.targetUserId : data.senderId;
-    const partnerName = (data.senderId === loggedUser.userId) ? data.targetUserId : data.senderName;
 
-    // Save message into LocalStorage
-    const pData = getUserPrivateData();
-    if (!pData.friends[partnerId]) {
-        pData.friends[partnerId] = { name: partnerName };
-    } else if (data.senderId !== loggedUser.userId && partnerName && partnerName !== partnerId) {
-        // Update friendly name if known
-        pData.friends[partnerId].name = partnerName;
+    if (!localPrivateMessages[partnerId]) {
+        localPrivateMessages[partnerId] = [];
     }
 
-    if (!pData.messages[partnerId]) {
-        pData.messages[partnerId] = [];
-    }
-
-    pData.messages[partnerId].push(data);
-    saveUserPrivateData(pData);
-    updateDmListUI();
+    localPrivateMessages[partnerId].push(data);
 
     if (activeChat.type === 'private' && activeChat.id === partnerId) {
         renderMessages();
     }
 });
 
-// Render UI Messages
 function renderMessages() {
     const bannerHtml = `
         <div class="welcome-banner">
@@ -415,8 +356,7 @@ function renderMessages() {
     if (activeChat.type === 'global') {
         msgsToRender = globalMessages;
     } else if (activeChat.type === 'private') {
-        const pData = getUserPrivateData();
-        msgsToRender = pData.messages[activeChat.id] || [];
+        msgsToRender = localPrivateMessages[activeChat.id] || [];
     }
 
     msgsToRender.forEach(msg => {
@@ -453,11 +393,3 @@ function escapeHtml(str) {
               .replace(/"/g, "&quot;")
               .replace(/'/g, "&#039;");
 }
-
-// AUTO INIT USER SESSION IF SAVED IN LOCALSTORAGE
-window.addEventListener('DOMContentLoaded', () => {
-    const savedUser = getSavedUserSession();
-    if (savedUser) {
-        loginUserSession(savedUser);
-    }
-});
