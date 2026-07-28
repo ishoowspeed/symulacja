@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Komunikator — logowanie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #120c1e;
+    --bg-panel: #191228;
+    --bg-panel-2: #1f1836;
+    --accent: #7c5cff;
+    --accent-soft: #a78bfa;
+    --accent-dim: #40316f;
+    --text-primary: #f3f0ff;
+    --text-muted: #9c93b8;
+    --line: rgba(255, 255, 255, 0.09);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--text-primary);
+    background: var(--bg-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 700px 500px at 18% 12%, rgba(124, 92, 255, 0.16), transparent 60%),
+      radial-gradient(ellipse 600px 500px at 88% 92%, rgba(90, 60, 190, 0.18), transparent 60%),
+      linear-gradient(180deg, #100b1c 0%, #140f22 100%);
+  }
+
+  .backdrop::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 42px 42px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 20%, transparent 75%);
+    opacity: 0.5;
+  }
+
+  .backdrop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  #particles {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    bottom: -10%;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent-soft);
+    opacity: 0;
+    white-space: nowrap;
+    animation: drift linear infinite;
+    letter-spacing: 0.04em;
+  }
+  @keyframes drift {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    8%   { opacity: 0.22; }
+    85%  { opacity: 0.16; }
+    100% { transform: translateY(-115vh) translateX(var(--drift-x, 20px)); opacity: 0; }
+  }
+
+  main {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 380px;
+    padding: 24px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-soft);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .eyebrow .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px 1px rgba(124, 92, 255, 0.8);
+  }
+
+  .card {
+    position: relative;
+    background: linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 36px 32px 30px;
+    box-shadow:
+      0 30px 60px -20px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(124, 92, 255, 0.04),
+      0 0 60px -20px rgba(124, 92, 255, 0.25);
+  }
+
+  h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    margin: 0 0 28px;
+    color: var(--text-muted);
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+
+  label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 7px;
+    margin-top: 18px;
+  }
+  label:first-of-type { margin-top: 0; }
+
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 14.5px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  input::placeholder { color: #625a7c; }
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.22);
+  }
+
+  .forgot {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--accent-soft);
+    text-decoration: none;
+  }
+  .forgot:hover { text-decoration: underline; }
+
+  button#login-btn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #8a6bff, var(--accent));
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -6px rgba(124, 92, 255, 0.55);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+  }
+  button#login-btn:hover { filter: brightness(1.07); }
+  button#login-btn:active { transform: translateY(1px); }
+  button#login-btn:focus-visible {
+    outline: 2px solid var(--accent-soft);
+    outline-offset: 3px;
+  }
+
+  .bottom-line {
+    margin: 20px 0 0;
+    text-align: center;
+    font-size: 13.5px;
+    color: var(--text-muted);
+  }
+  .bottom-line a {
+    color: var(--accent-soft);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .bottom-line a:hover { text-decoration: underline; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .particle { animation: none; display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="backdrop"></div>
+<div id="particles"></div>
+
+<main>
+  <div class="eyebrow"><span class="dot"></span>Połączenie szyfrowane</div>
+  <div class="card">
+    <h1>Cześć! U nas jest bezpiecznie.</h1>
+    <p class="subtitle">Cieszymy się, że wybrałeś bezpieczeństwo.</p>
+
+    <form id="login-form">
+      <label for="nick">Nazwa</label>
+      <input id="nick" type="text" placeholder="Jak mamy Cię przedstawić?" maxlength="20" autocomplete="username" required />
+
+      <label for="password">Hasło</label>
+      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+      <a class="forgot" href="#">Nie pamiętasz hasła?</a>
+
+      <button id="login-btn" type="submit">Zaloguj się</button>
+    </form>
+
+    <p class="bottom-line">Potrzebujesz konta? <a href="#">Zarejestruj się</a></p>
+  </div>
+</main>
+
+<script>
+  if (localStorage.getItem('komunikator_nick')) {
+    window.location.href = 'chat.html';
+  }
+
+  const glyphs = ['01', '10', '11', '#7f2a', 'aes-256', '0xF3', '10110', 'end-to-end', '01001', '#b91c'];
+  const container = document.getElementById('particles');
+  const count = 14;
+  for (let i = 0; i < count; i++) {
+    const span = document.createElement('span');
+    span.className = 'particle';
+    span.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
+    span.style.left = Math.random() * 100 + '%';
+    span.style.fontSize = (11 + Math.random() * 7) + 'px';
+    span.style.setProperty('--drift-x', (Math.random() * 60 - 30) + 'px');
+    const duration = 14 + Math.random() * 12;
+    span.style.animationDuration = duration + 's';
+    span.style.animationDelay = (-Math.random() * duration) + 's';
+    container.appendChild(span);
+  }
+
+  document.getElementById('login-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nick = document.getElementById('nick').value.trim();
+    if (!nick) return;
+    localStorage.setItem('komunikator_nick', nick);
+    window.location.href = 'chat.html';
+  });
+</script>
+
+</body>
+</html>
