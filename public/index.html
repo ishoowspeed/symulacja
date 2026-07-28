@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#10131b" />
+    <title>Mój Komunikator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="chat-shell">
+      <header class="chat-header">
+        <div class="logo" aria-hidden="true">✦</div>
+        <div>
+          <h1>Mój Komunikator</h1>
+          <p class="status"><span></span> Wspólny czat na żywo</p>
+        </div>
+      </header>
+
+      <section id="messages" class="messages" aria-live="polite" aria-label="Wiadomości czatu">
+        <p id="empty-state" class="empty-state">Jeszcze nie ma wiadomości. Napisz pierwszą!</p>
+      </section>
+
+      <form id="message-form" class="message-form">
+        <label class="sr-only" for="message-input">Twoja wiadomość</label>
+        <textarea
+          id="message-input"
+          maxlength="500"
+          rows="1"
+          placeholder="Napisz wiadomość..."
+          autocomplete="off"
+        ></textarea>
+        <button id="send-button" type="submit">Wyślij</button>
+      </form>
+      <div class="form-footer"><span id="character-count">0 / 500</span><span>Enter — wyślij</span></div>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
