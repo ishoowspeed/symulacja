@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>ELITE</title>
+</head>
+<body>
+  <h1>ELITE</h1>
+
+  <div>
+    <label for="nick">Twoj nick:</label>
+    <input type="text" id="nick" placeholder="Nick" value="Anonim">
+  </div>
+
+  <hr>
+
+  <div id="messages"></div>
+
+  <hr>
+
+  <form id="messageForm">
+    <input type="text" id="messageInput" placeholder="Napisz wiadomosc..." autocomplete="off">
+    <button type="submit">Wyslij</button>
+  </form>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    const messagesDiv = document.getElementById('messages');
+    const form = document.getElementById('messageForm');
+    const input = document.getElementById('messageInput');
+    const nickInput = document.getElementById('nick');
+
+    function renderMessage(msg) {
+      const p = document.createElement('p');
+      p.textContent = '[' + msg.time + '] ' + msg.nick + ': ' + msg.text;
+      messagesDiv.appendChild(p);
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    socket.on('history', (history) => {
+      messagesDiv.innerHTML = '';
+      history.forEach(renderMessage);
+    });
+
+    socket.on('new_message', (msg) => {
+      renderMessage(msg);
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = input.value;
+      if (!text.trim()) return;
+
+      socket.emit('send_message', {
+        nick: nickInput.value,
+        text: text
+      });
+
+      input.value = '';
+    });
+  </script>
+</body>
+</html>
