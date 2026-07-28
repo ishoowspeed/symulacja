@@ -1,0 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #0d0510;
+  color: #e8e0f0;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+h1 {
+  color: #a855f7;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
+  margin-bottom: 10px;
+}
+
+.container {
+  width: 100%;
+  max-width: 600px;
+  background-color: #150a1c;
+  border: 1px solid #3b1d4d;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 25px rgba(88, 28, 135, 0.35);
+}
+
+.nick-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.nick-bar label {
+  color: #b98af0;
+  font-size: 14px;
+}
+
+input[type="text"] {
+  background-color: #1e0f28;
+  border: 1px solid #4c2569;
+  color: #e8e0f0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  outline: none;
+}
+
+input[type="text"]:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+
+#nick {
+  width: 140px;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #3b1d4d;
+  margin: 16px 0;
+}
+
+#messages {
+  height: 350px;
+  overflow-y: auto;
+  padding-right: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+#messages::-webkit-scrollbar-track {
+  background: #150a1c;
+}
+
+#messages::-webkit-scrollbar-thumb {
+  background-color: #4c2569;
+  border-radius: 4px;
+}
+
+.message {
+  background-color: #1e0f28;
+  border: 1px solid #2e1640;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.message .time {
+  color: #7c5a94;
+  font-size: 11px;
+  margin-right: 6px;
+}
+
+.message .nick {
+  color: #c084fc;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.message .text {
+  color: #e8e0f0;
+}
+
+#messageForm {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+#messageInput {
+  flex: 1;
+}
+
+button {
+  background-color: #7c2ee0;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+  background-color: #9333ea;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
+}
