@@ -1,7 +1,7 @@
 {
   "name": "elite-chat",
-  "version": "1.0.0",
-  "description": "ELITE - Simple Discord-like purple written chat",
+  "version": "1.1.0",
+  "description": "ELITE - Discord-like purple written chat with LocalStorage persistence & password login",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
