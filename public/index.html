@@ -1,157 +1,135 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ELITE Communicator</title>
-    <!-- Google Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <script src="/socket.io/socket.io.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikacja z Baza Neon.tech</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    .card { background: #1e293b; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 400px; border: 1px solid #334155; }
+    h2 { margin-top: 0; color: #38bdf8; text-align: center; font-size: 1.8rem; margin-bottom: 1.5rem; }
+    .tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid #334155; }
+    .tab { flex: 1; text-align: center; padding: 0.75rem; cursor: pointer; color: #94a3b8; font-weight: 600; }
+    .tab.active { color: #38bdf8; border-bottom: 2px solid #38bdf8; margin-bottom: -2px; }
+    .form-group { margin-bottom: 1.25rem; }
+    label { display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-size: 0.9rem; }
+    input { width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 1rem; }
+    input:focus { outline: none; border-color: #38bdf8; }
+    button { width: 100%; padding: 0.75rem; border-radius: 6px; border: none; background: #0284c7; color: white; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #0369a1; }
+    #message { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; text-align: center; display: none; font-size: 0.9rem; }
+    .success { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+    .error { background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b; }
+    #user-dashboard { display: none; text-align: center; }
+    .welcome-text { font-size: 1.2rem; margin-bottom: 1.5rem; color: #e2e8f0; }
+  </style>
 </head>
 <body>
 
-    <!-- Modal Logowania / Rejestracji na Serwerze -->
-    <div id="login-modal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="logo">ELITE</div>
-            
-            <div class="auth-tabs">
-                <button type="button" id="tab-login-btn" class="auth-tab active">Logowanie</button>
-                <button type="button" id="tab-register-btn" class="auth-tab">Rejestracja</button>
-            </div>
+  <div class="card">
+    <div id="auth-box">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('login')">Logowanie</div>
+        <div class="tab" onclick="switchTab('register')">Rejestracja</div>
+      </div>
 
-            <form id="login-form" class="auth-form">
-                <input type="text" id="login-username" placeholder="Twój nick..." required autocomplete="off">
-                <input type="password" id="login-password" placeholder="Hasło..." required>
-                <button type="submit">Zaloguj się</button>
-            </form>
-
-            <form id="register-form" class="auth-form hidden">
-                <input type="text" id="reg-username" placeholder="Twój nowy nick..." maxlength="20" required autocomplete="off">
-                <input type="password" id="reg-password" placeholder="Stwórz hasło..." required>
-                <button type="submit">Utwórz konto ELITE</button>
-            </form>
-            <div id="auth-error" class="auth-error hidden"></div>
+      <form id="auth-form" onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label for="username">Nazwa użytkownika</label>
+          <input type="text" id="username" required autocomplete="username">
         </div>
-    </div>
-
-    <!-- Pasek boczny overlay dla mobile -->
-    <div id="sidebar-overlay" class="sidebar-overlay"></div>
-
-    <div class="app-container">
-        
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="server-header">
-                <span class="server-title">ELITE</span>
-                <button class="close-sidebar-btn" id="close-sidebar-btn">
-                    <span class="material-icons">close</span>
-                </button>
-            </div>
-
-            <div class="sidebar-section">
-                <div class="section-title">KANAŁY TEKSTOWE</div>
-                <button class="channel-btn active" id="btn-channel-main">
-                    <span class="material-icons channel-icon">tag</span> GŁÓWNY
-                </button>
-            </div>
-
-            <div class="sidebar-section dms-section">
-                <div class="section-title-row">
-                    <span class="section-title">ZNAJOMI</span>
-                    <button id="btn-add-dm" title="Dodaj znajomego">
-                        <span class="material-icons">add</span>
-                    </button>
-                </div>
-                <div id="dm-list" class="dm-list">
-                    <!-- Lista znajomych pobierana z konta na serwerze -->
-                </div>
-            </div>
-
-            <!-- Profil użytkownika ze zmianą statusu i wylogowaniem -->
-            <div class="user-profile">
-                <div class="avatar-container">
-                    <div class="avatar" id="my-avatar">E</div>
-                    <div class="status-indicator status-active" id="my-status-dot"></div>
-                </div>
-                <div class="user-details">
-                    <div class="username" id="my-username">Ładowanie...</div>
-                    <div class="user-id" id="my-userid" title="Kliknij, aby skopiować swój ID">ID: ---</div>
-                </div>
-                
-                <!-- Wybór Statusu -->
-                <div class="status-menu-wrapper">
-                    <button id="status-toggle-btn" class="icon-btn" title="Zmień status">
-                        <span class="material-icons">settings</span>
-                    </button>
-                    <div id="status-dropdown" class="status-dropdown hidden">
-                        <button type="button" data-status="AKTYWNY" class="status-opt">
-                            <span class="status-dot dot-active"></span> AKTYWNY
-                        </button>
-                        <button type="button" data-status="NIE PRZESZKADZAC" class="status-opt">
-                            <span class="status-dot dot-dnd"></span> NIE PRZESZKADZAC
-                        </button>
-                        <button type="button" data-status="NIEAKTYWNY" class="status-opt">
-                            <span class="status-dot dot-offline"></span> NIEAKTYWNY
-                        </button>
-                    </div>
-                </div>
-
-                <button id="logout-btn" title="Wyloguj się" class="icon-btn logout-btn">
-                    <span class="material-icons">logout</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Główny panel czatu -->
-        <main class="chat-area">
-            <header class="chat-header">
-                <button class="mobile-menu-btn" id="mobile-menu-btn">
-                    <span class="material-icons">menu</span>
-                </button>
-                <span class="material-icons header-chat-icon" id="chat-type-icon">tag</span>
-                <div class="chat-header-info">
-                    <span class="chat-title" id="chat-title-name">GŁÓWNY</span>
-                    <span class="chat-desc" id="chat-title-desc">Oficjalny główny kanał tekstowy</span>
-                </div>
-            </header>
-
-            <div class="messages-container" id="messages-container">
-                <div class="welcome-banner">
-                    <h1 id="banner-title">Witaj na kanale #GŁÓWNY!</h1>
-                    <p id="banner-sub">To jest początek kanału #GŁÓWNY serwera ELITE.</p>
-                </div>
-                <!-- Wiadomości -->
-            </div>
-
-            <form class="message-form" id="message-form">
-                <input type="text" id="message-input" placeholder="Napisz wiadomość na #GŁÓWNY..." autocomplete="off">
-                <button type="submit">
-                    <span class="material-icons">send</span>
-                </button>
-            </form>
-        </main>
-    </div>
-
-    <!-- Modal dodawania znajomego -->
-    <div id="dm-modal" class="modal-overlay hidden">
-        <div class="modal-box">
-            <h2>Dodaj znajomego</h2>
-            <p class="modal-desc">Podaj ID użytkownika (np. ELITE-A1B2C3), aby dodać go do swojego konta:</p>
-            <form id="dm-form">
-                <input type="text" id="target-id-input" placeholder="Wklej ID użytkownika..." required autocomplete="off">
-                <div class="modal-buttons">
-                    <button type="button" class="btn-cancel" id="btn-close-dm-modal">Anuluj</button>
-                    <button type="submit">Dodaj znajomego</button>
-                </div>
-            </form>
+        <div class="form-group">
+          <label for="password">Hasło</label>
+          <input type="password" id="password" required autocomplete="current-password">
         </div>
+        <button type="submit" id="submit-btn">Zaloguj się</button>
+      </form>
     </div>
 
-    <!-- Powiadomienie Toast -->
-    <div id="toast" class="toast hidden">ID skopiowane do schowka!</div>
+    <div id="user-dashboard">
+      <h2>Witaj w aplikacji!</h2>
+      <p class="welcome-text">Zalogowano jako: <strong id="logged-username" style="color: #38bdf8;"></strong></p>
+      <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1.5rem;">
+        Twoje dane są bezpiecznie przechowywane w bazie Neon.tech. Nawet jeśli Render zrestartuje serwer, pozostaniesz w bazie!
+      </p>
+      <button onclick="logout()" style="background: #475569;">Wyloguj się</button>
+    </div>
 
-    <script src="app.js"></script>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    let mode = 'login';
+
+    function switchTab(newMode) {
+      mode = newMode;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      const tabs = document.querySelectorAll('.tab');
+      if (mode === 'login') {
+        tabs[0].classList.add('active');
+        document.getElementById('submit-btn').innerText = 'Zaloguj się';
+      } else {
+        tabs[1].classList.add('active');
+        document.getElementById('submit-btn').innerText = 'Zarejestruj się';
+      }
+      hideMessage();
+    }
+
+    function showMessage(text, isError = false) {
+      const msgBox = document.getElementById('message');
+      msgBox.innerText = text;
+      msgBox.className = isError ? 'error' : 'success';
+      msgBox.style.display = 'block';
+    }
+
+    function hideMessage() {
+      document.getElementById('message').style.display = 'none';
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      hideMessage();
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      const endpoint = mode === 'register' ? '/api/register' : '/api/login';
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          if (mode === 'register') {
+            showMessage(data.message + ' Możesz się teraz zalogować.');
+            switchTab('login');
+          } else {
+            document.getElementById('auth-box').style.display = 'none';
+            document.getElementById('user-dashboard').style.display = 'block';
+            document.getElementById('logged-username').innerText = data.user.username;
+          }
+        } else {
+          showMessage(data.message || 'Wystąpił błąd', true);
+        }
+      } catch (err) {
+        showMessage('Brak połączenia z serwerem.', true);
+      }
+    }
+
+    function logout() {
+      document.getElementById('user-dashboard').style.display = 'none';
+      document.getElementById('auth-box').style.display = 'block';
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      hideMessage();
+      switchTab('login');
+    }
+  </script>
 </body>
 </html>

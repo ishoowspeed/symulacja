@@ -1,40 +1,14 @@
-# ELITE Communicator
+# Gotowa Aplikacja z Bazą Neon.tech (Render.com)
 
-Prosty, elegancki komunikator pisemny w fioletowym motywie inspirowany Discordem, stworzony w Node.js, Express i Socket.io.
+Ten projekt jest gotowy do wdrożenia na platformie **Render.com**. 
+Aplikacja automatycznie tworzy potrzebną tabelę w bazie danych PostgreSQL przy pierwszym uruchomieniu.
 
-## Funkcje:
-- **Kanał GŁÓWNY**: Ogólny publiczny czat tekstowy dla wszystkich połączonych użytkowników.
-- **Wiadomości Prywatne (PW/DM)**: Możliwość rozpoczęcia czatu z konkretnym użytkownikiem po podaniu jego unikalnego ID.
-- **Unikalne ID**: Każdy użytkownik po wejściu otrzymuje własne ID (np. `ELITE-A1B2C3`), które może łatwo skopiować ze swojego profilu w lewym dolnym rogu.
-- **Mega prosty wygląd CSS**: Brak przeskoczonych bibliotek UI, czysty fioletowy motyw Discorda.
+## Jak wdrożyć projekt na Render.com?
 
-## Jak uruchomić lokalnie:
-
-1. Przejdź do folderu projektu:
-   ```bash
-   cd ELITE
-   ```
-2. Zainstaluj zależności:
-   ```bash
-   npm install
-   ```
-3. Uruchom serwer:
-   ```bash
-   npm start
-   ```
-4. Otwórz w przeglądarce: [http://localhost:3000](http://localhost:3000)
-
----
-
-## Jak wdrożyć na Render.com:
-
-1. Wgraj folder projektu do swojego repozytorium na **GitHub / GitLab**.
-2. Zaloguj się na [Render.com](https://render.com).
-3. Kliknij **New +** -> **Web Service**.
-4. Połącz swoje repozytorium GitHub z projektem `ELITE`.
-5. Ustaw następujące opcje:
-   - **Environment**: `Node`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-6. Kliknij **Create Web Service**.
-7. Twój komunikator ELITE będzie gotowy pod wygenerowanym adresem URL!
+1. Rozpakuj ten plik `.zip`.
+2. Wrzuć zawartość folderu do swojego repozytorium na **GitHub**.
+3. Wejdź na **[dashboard.render.com](https://dashboard.render.com/)** i utwórz nową usługę **Web Service** powiązaną z tym repozytorium GitHub.
+4. W zakładce **Environment** w panelu Render dodaj zmienną środowiskową:
+   - **Key (Nazwa):** `DATABASE_URL`
+   - **Value (Wartość):** Twój ciąg połączeniowy z Neon.tech (np. `postgresql://user:pass@ep-cool-name.neon.tech/neondb?sslmode=require`)
+5. Zapisz zmiany. Render automatycznie zainstaluje zależności (`npm install`) i uruchomi serwer (`npm start`).
