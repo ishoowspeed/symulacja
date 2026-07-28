@@ -2,88 +2,137 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Aplikacja Czat</title>
-  <!-- Material Symbols z Google Fonts -->
+  <!-- Google Fonts Material Symbols -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
   <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body { background-color: #1e1f29; color: #f2f3f5; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
 
     /* EKRAN AUTORYZACJI */
-    .auth-container { background: #2b2d3f; padding: 2.5rem; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); width: 100%; max-width: 420px; border: 1px solid #47326e; text-align: center; }
-    .auth-container h2 { color: #ffffff; font-size: 1.6rem; margin-bottom: 1.5rem; }
-    .tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid #3b3d54; }
+    .auth-container { background: #2b2d3f; padding: 2rem; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); width: 90%; max-width: 400px; border: 1px solid #47326e; text-align: center; }
+    .auth-container h2 { color: #ffffff; font-size: 1.5rem; margin-bottom: 1.2rem; }
+    .tabs { display: flex; margin-bottom: 1.2rem; border-bottom: 2px solid #3b3d54; }
     .tab { flex: 1; padding: 0.75rem; cursor: pointer; color: #949ba4; font-weight: 600; }
     .tab.active { color: #a855f7; border-bottom: 2px solid #a855f7; margin-bottom: -2px; }
-    .form-group { margin-bottom: 1.25rem; text-align: left; }
-    label { display: block; margin-bottom: 0.5rem; color: #b9bbbe; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; }
+    .form-group { margin-bottom: 1rem; text-align: left; }
+    label { display: block; margin-bottom: 0.4rem; color: #b9bbbe; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
     input, select { width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #1e1f29; background: #1e1f29; color: white; font-size: 1rem; }
     input:focus, select:focus { outline: none; border-color: #a855f7; }
     button.auth-btn { width: 100%; padding: 0.8rem; border-radius: 6px; border: none; background: #8b5cf6; color: white; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
     button.auth-btn:hover { background: #7c3aed; }
-    #message { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    #message { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; display: none; }
     .success { background: #15803d; color: #4ade80; }
     .error { background: #991b1b; color: #fca5a5; }
 
-    /* EKRAN GŁÓWNY CZATU */
-    #app-container { display: none; width: 100vw; height: 100vh; flex-direction: row; }
-    .sidebar-servers { width: 72px; background-color: #13131a; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; border-right: 1px solid #2b2d3f; }
+    /* APLIKACJA CZATU */
+    #app-container { display: none; width: 100vw; height: 100vh; flex-direction: row; position: relative; }
+
+    /* SIDEBAR SERWERÓW */
+    .sidebar-servers { width: 72px; background-color: #13131a; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; border-right: 1px solid #2b2d3f; flex-shrink: 0; }
     .server-icon { width: 48px; height: 48px; background-color: #2b2d3f; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #a855f7; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 1.2rem; }
     .server-icon:hover, .server-icon.active { background-color: #8b5cf6; color: white; border-radius: 16px; }
 
-    .sidebar-channels { width: 240px; background-color: #1e1f29; display: flex; flex-direction: column; border-right: 1px solid #2b2d3f; }
+    /* SIDEBAR KANAŁÓW / ZNAJOMYCH */
+    .sidebar-channels { width: 240px; background-color: #1e1f29; display: flex; flex-direction: column; border-right: 1px solid #2b2d3f; flex-shrink: 0; transition: transform 0.3s ease; }
     .server-header { padding: 16px; font-weight: bold; color: white; border-bottom: 1px solid #2b2d3f; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
-    .channels-list { padding: 10px 8px; flex: 1; }
-    .channel-item { padding: 8px 12px; border-radius: 6px; color: #949ba4; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+    .section-title { font-size: 0.75rem; font-weight: bold; color: #949ba4; text-transform: uppercase; padding: 12px 12px 4px; display: flex; justify-content: space-between; align-items: center; }
+    .add-btn { background: none; border: none; color: #949ba4; cursor: pointer; display: flex; align-items: center; }
+    .add-btn:hover { color: white; }
+
+    .channels-list { flex: 1; overflow-y: auto; padding: 4px; }
+    .channel-item { padding: 8px 12px; border-radius: 6px; color: #949ba4; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; margin-bottom: 2px; }
     .channel-item:hover, .channel-item.active { background-color: #2b2d3f; color: #f2f3f5; }
 
-    .user-panel { padding: 12px; background-color: #13131a; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2b2d3f; }
-    .user-info { display: flex; align-items: center; gap: 8px; overflow: hidden; }
-    .avatar-wrapper { position: relative; display: inline-block; }
-    .avatar { width: 36px; height: 36px; background-color: #8b5cf6; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1rem; }
-    .status-dot { position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #13131a; }
+    .friend-item { padding: 8px 12px; border-radius: 6px; color: #949ba4; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-weight: 500; margin-bottom: 2px; }
+    .friend-item:hover, .friend-item.active { background-color: #2b2d3f; color: #f2f3f5; }
+    .friend-name { display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* STATUS DOT */
+    .status-dot-inline { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
     .status-Online { background-color: #22c55e; }
     .status-Offline { background-color: #64748b; }
     .status-Nie-przeszkadzać { background-color: #ef4444; }
 
-    .user-details { display: flex; flex-direction: column; }
-    .username-text { font-weight: bold; font-size: 0.9rem; color: #f2f3f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
-    .status-text { font-size: 0.75rem; color: #949ba4; }
+    /* PANEL UŻYTKOWNIKA */
+    .user-panel { padding: 12px; background-color: #13131a; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2b2d3f; }
+    .user-info { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+    .avatar-wrapper { position: relative; display: inline-block; }
+    .avatar { width: 36px; height: 36px; background-color: #8b5cf6; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1rem; color: white; }
+    .status-dot-avatar { position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #13131a; }
 
-    .panel-actions { display: flex; gap: 6px; align-items: center; }
+    .user-details { display: flex; flex-direction: column; }
+    .username-text { font-weight: bold; font-size: 0.85rem; color: #f2f3f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+    .status-text { font-size: 0.7rem; color: #949ba4; }
+
+    .panel-actions { display: flex; gap: 4px; align-items: center; }
     .icon-btn { background: none; border: none; color: #949ba4; cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s, background 0.2s; }
     .icon-btn:hover { color: #f2f3f5; background-color: #2b2d3f; }
     .icon-btn.logout:hover { color: #fca5a5; }
 
-    .chat-area { flex: 1; background-color: #2b2d3f; display: flex; flex-direction: column; }
-    .chat-header { height: 50px; border-bottom: 1px solid #1e1f29; display: flex; align-items: center; padding: 0 16px; font-weight: bold; gap: 8px; color: white; }
+    /* OBSZAR CZATU */
+    .chat-area { flex: 1; background-color: #2b2d3f; display: flex; flex-direction: column; height: 100vh; }
+    .chat-header { height: 50px; border-bottom: 1px solid #1e1f29; display: flex; align-items: center; padding: 0 16px; font-weight: bold; gap: 8px; color: white; justify-content: space-between; flex-shrink: 0; }
+    .chat-title-group { display: flex; align-items: center; gap: 8px; }
+    .mobile-menu-btn { display: none; background: none; border: none; color: white; cursor: pointer; margin-right: 8px; }
+
     .chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
     .message-item { display: flex; gap: 12px; }
-    .message-avatar { width: 40px; height: 40px; background-color: #7c3aed; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; flex-shrink: 0; }
+    .message-avatar-wrapper { position: relative; flex-shrink: 0; }
+    .message-avatar { width: 40px; height: 40px; background-color: #7c3aed; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; color: white; }
+    .message-status-dot { position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #2b2d3f; }
+
     .message-content-box { display: flex; flex-direction: column; }
     .message-author { font-weight: bold; color: #c084fc; font-size: 0.95rem; margin-bottom: 2px; }
     .message-time { font-size: 0.75rem; color: #949ba4; font-weight: normal; margin-left: 8px; }
     .message-text { color: #dcddde; font-size: 0.95rem; line-height: 1.4; word-break: break-word; }
 
-    .chat-input-area { padding: 16px; background-color: #2b2d3f; }
+    .chat-input-area { padding: 16px; background-color: #2b2d3f; flex-shrink: 0; }
     .chat-input-wrapper { background-color: #1e1f29; border-radius: 8px; padding: 0 12px; display: flex; align-items: center; border: 1px solid #47326e; }
     .chat-input { width: 100%; padding: 12px 0; background: transparent; border: none; color: white; font-size: 1rem; }
     .chat-input:focus { outline: none; }
-    .send-btn { background: #8b5cf6; border: none; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-left: 8px; }
+    .send-btn { background: #8b5cf6; border: none; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-left: 8px; flex-shrink: 0; }
     .send-btn:hover { background: #7c3aed; }
 
-    /* OKNO MODALNE USTAWIEŃ */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: #2b2d3f; padding: 2rem; border-radius: 12px; border: 1px solid #47326e; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
+    /* OKNA MODALNE */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); justify-content: center; align-items: center; z-index: 2000; }
+    .modal-content { background: #2b2d3f; padding: 2rem; border-radius: 12px; border: 1px solid #47326e; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .modal-header h3 { color: #ffffff; font-size: 1.3rem; }
     .modal-close { background: none; border: none; color: #949ba4; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; }
-    .modal-close:hover { color: #ffffff; }
     .modal-actions { display: flex; gap: 10px; margin-top: 1.5rem; }
     .btn-secondary { background: #475569; border: none; color: white; padding: 0.75rem; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; }
-    .btn-secondary:hover { background: #334155; }
-    #settings-message { margin-top: 1rem; padding: 0.5rem; border-radius: 4px; font-size: 0.85rem; text-align: center; display: none; }
+    .modal-msg { margin-top: 1rem; padding: 0.5rem; border-radius: 4px; font-size: 0.85rem; text-align: center; display: none; }
+
+    /* WERSJA MOBILNA RESPONSYWNOŚĆ */
+    @media (max-width: 768px) {
+      .mobile-menu-btn { display: flex; align-items: center; }
+      .sidebar-servers { display: none; }
+      
+      .sidebar-channels {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 1000;
+        transform: translateX(-100%);
+        width: 280px;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+      }
+
+      .sidebar-channels.open {
+        transform: translateX(0);
+      }
+
+      .chat-header {
+        padding: 0 12px;
+      }
+
+      .chat-input-area {
+        padding: 10px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -112,26 +161,34 @@
     <div id="message"></div>
   </div>
 
-  <!-- EKRAN GŁÓWNY CZATU -->
+  <!-- APLIKACJA CZATU -->
   <div id="app-container">
-    <!-- Kolumna Serwerów -->
     <div class="sidebar-servers">
       <div class="server-icon active">T</div>
-      <div class="server-icon">+</div>
     </div>
 
-    <!-- Kolumna Kanałów -->
-    <div class="sidebar-channels">
+    <div class="sidebar-channels" id="sidebar-channels">
       <div class="server-header">
         <span>Test</span>
+        <button class="icon-btn" onclick="toggleMobileSidebar()" style="display: md-none;">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
+
       <div class="channels-list">
-        <div class="channel-item active">
+        <div class="section-title">Kanały tekstowe</div>
+        <div class="channel-item active" id="channel-general" onclick="selectGeneralChat()">
           <span style="font-size: 1.2rem; color: #a855f7;">#</span> ogólny
         </div>
-        <div class="channel-item">
-          <span style="font-size: 1.2rem; color: #949ba4;">#</span> rozmowy
+
+        <div class="section-title">
+          <span>Wiadomości Prywatne</span>
+          <button class="add-btn" onclick="openAddFriendModal()" title="Dodaj znajomego">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">person_add</span>
+          </button>
         </div>
+
+        <div id="friends-list"></div>
       </div>
 
       <!-- Panel Użytkownika -->
@@ -139,7 +196,7 @@
         <div class="user-info">
           <div class="avatar-wrapper">
             <div class="avatar" id="user-avatar">U</div>
-            <div class="status-dot status-Online" id="status-dot"></div>
+            <div class="status-dot-avatar status-Online" id="status-dot"></div>
           </div>
           <div class="user-details">
             <span class="username-text" id="logged-username">Użytkownik</span>
@@ -148,11 +205,9 @@
         </div>
         
         <div class="panel-actions">
-          <!-- Ikona Ustawień (Google Fonts) -->
           <button class="icon-btn" onclick="openSettingsModal()" title="Ustawienia">
             <span class="material-symbols-outlined">settings</span>
           </button>
-          <!-- Ikona Wyloguj (Google Fonts) -->
           <button class="icon-btn logout" onclick="logout()" title="Wyloguj">
             <span class="material-symbols-outlined">logout</span>
           </button>
@@ -160,11 +215,16 @@
       </div>
     </div>
 
-    <!-- Główny Czat -->
+    <!-- Czat Główny -->
     <div class="chat-area">
       <div class="chat-header">
-        <span style="font-size: 1.4rem; color: #a855f7;">#</span>
-        <span>ogólny</span>
+        <div class="chat-title-group">
+          <button class="mobile-menu-btn" onclick="toggleMobileSidebar()">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+          <span id="chat-type-icon" style="font-size: 1.4rem; color: #a855f7;">#</span>
+          <span id="chat-target-title">ogólny</span>
+        </div>
       </div>
 
       <div class="chat-messages" id="messages-container"></div>
@@ -180,7 +240,7 @@
     </div>
   </div>
 
-  <!-- OKNO MODALNE USTAWIEŃ -->
+  <!-- MODAL USTAWIEŃ -->
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -210,7 +270,7 @@
           </select>
         </div>
 
-        <div id="settings-message"></div>
+        <div id="settings-message" class="modal-msg"></div>
 
         <div class="modal-actions">
           <button type="button" class="btn-secondary" onclick="closeSettingsModal()">Anuluj</button>
@@ -220,10 +280,38 @@
     </div>
   </div>
 
+  <!-- MODAL DODAWANIA ZNAJOMEGO -->
+  <div class="modal-overlay" id="friend-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Dodaj znajomego</h3>
+        <button class="modal-close" onclick="closeAddFriendModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form onsubmit="handleAddFriend(event)">
+        <div class="form-group">
+          <label>Nazwa użytkownika</label>
+          <input type="text" id="friend-username-input" placeholder="Wpisz dokładną nazwę" required>
+        </div>
+
+        <div id="friend-message" class="modal-msg"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeAddFriendModal()">Anuluj</button>
+          <button type="submit" class="auth-btn" style="flex:1;">Dodaj</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     let mode = 'login';
     let currentUser = null;
     let ws = null;
+    let activeChat = { type: 'general', id: null, name: 'ogólny' };
+    let friends = [];
 
     function switchTab(newMode) {
       mode = newMode;
@@ -288,13 +376,12 @@
 
     async function enterChatApp() {
       document.getElementById('auth-box').style.display = 'none';
-      const appContainer = document.getElementById('app-container');
-      appContainer.style.display = 'flex';
+      document.getElementById('app-container').style.display = 'flex';
 
       updateUserUI();
-
-      await loadMessageHistory();
       connectWebSocket();
+      await loadFriends();
+      selectGeneralChat();
     }
 
     function updateUserUI() {
@@ -305,10 +392,84 @@
       document.getElementById('logged-status').innerText = status;
 
       const dot = document.getElementById('status-dot');
-      dot.className = 'status-dot status-' + status.replace(/\s+/g, '-');
+      dot.className = 'status-dot-avatar status-' + status.replace(/\s+/g, '-');
     }
 
-    async function loadMessageHistory() {
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: 'auth', userId: currentUser.id }));
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'status_update') {
+          handleStatusUpdate(data);
+        }
+
+        if (data.type === 'new_message' && activeChat.type === 'general') {
+          appendMessageUI(data.message);
+          scrollToBottom();
+        }
+
+        if (data.type === 'new_private_message') {
+          const isCurrentPrivateChat = activeChat.type === 'private' && 
+            (activeChat.id === data.message.sender_id || activeChat.id === data.message.receiver_id);
+
+          if (isCurrentPrivateChat) {
+            appendPrivateMessageUI(data.message);
+            scrollToBottom();
+          }
+        }
+      };
+
+      ws.onclose = () => {
+        setTimeout(connectWebSocket, 3000);
+      };
+    }
+
+    function handleStatusUpdate(data) {
+      // Zmiana statusu u znajomych
+      const friendObj = friends.find(f => f.id === data.userId);
+      if (friendObj) {
+        friendObj.status = data.status;
+        renderFriendsList();
+      }
+
+      // Aktualizacja ikon przy wiadomościach na czacie ogólnym
+      document.querySelectorAll(`.msg-user-${data.userId}`).forEach(dot => {
+        dot.className = `message-status-dot status-${data.status.replace(/\s+/g, '-')}`;
+      });
+    }
+
+    async function selectGeneralChat() {
+      activeChat = { type: 'general', id: null, name: 'ogólny' };
+      document.getElementById('chat-type-icon').innerText = '#';
+      document.getElementById('chat-target-title').innerText = 'ogólny';
+      document.getElementById('channel-general').classList.add('active');
+
+      renderFriendsList();
+      closeMobileSidebar();
+
+      await loadGeneralMessages();
+    }
+
+    async function selectPrivateChat(friendId, friendName) {
+      activeChat = { type: 'private', id: friendId, name: friendName };
+      document.getElementById('chat-type-icon').innerText = '@';
+      document.getElementById('chat-target-title').innerText = friendName;
+      document.getElementById('channel-general').classList.remove('active');
+
+      renderFriendsList();
+      closeMobileSidebar();
+
+      await loadPrivateMessages(friendId);
+    }
+
+    async function loadGeneralMessages() {
       try {
         const res = await fetch('/api/messages');
         const data = await res.json();
@@ -319,25 +480,23 @@
           scrollToBottom();
         }
       } catch (err) {
-        console.error('Błąd pobierania historii:', err);
+        console.error('Błąd pobierania wiadomości:', err);
       }
     }
 
-    function connectWebSocket() {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      ws = new WebSocket(`${protocol}//${window.location.host}`);
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'new_message') {
-          appendMessageUI(data.message);
+    async function loadPrivateMessages(friendId) {
+      try {
+        const res = await fetch(`/api/private-messages/${currentUser.id}/${friendId}`);
+        const data = await res.json();
+        if (data.success) {
+          const container = document.getElementById('messages-container');
+          container.innerHTML = '';
+          data.messages.forEach(msg => appendPrivateMessageUI(msg));
           scrollToBottom();
         }
-      };
-
-      ws.onclose = () => {
-        setTimeout(connectWebSocket, 3000);
-      };
+      } catch (err) {
+        console.error('Błąd pobierania PW:', err);
+      }
     }
 
     function appendMessageUI(msg) {
@@ -347,12 +506,41 @@
 
       const initial = msg.username ? msg.username.charAt(0).toUpperCase() : '?';
       const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      const statusClass = 'status-' + (msg.status || 'Offline').replace(/\s+/g, '-');
+      const userIdClass = msg.user_id ? `msg-user-${msg.user_id}` : '';
 
       msgDiv.innerHTML = `
-        <div class="message-avatar">${initial}</div>
+        <div class="message-avatar-wrapper">
+          <div class="message-avatar">${initial}</div>
+          <div class="message-status-dot ${statusClass} ${userIdClass}"></div>
+        </div>
         <div class="message-content-box">
           <div>
-            <span class="message-author">${msg.username}</span>
+            <span class="message-author">${escapeHtml(msg.username)}</span>
+            <span class="message-time">${timeStr}</span>
+          </div>
+          <div class="message-text">${escapeHtml(msg.content)}</div>
+        </div>
+      `;
+
+      container.appendChild(msgDiv);
+    }
+
+    function appendPrivateMessageUI(msg) {
+      const container = document.getElementById('messages-container');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message-item';
+
+      const initial = msg.sender_username ? msg.sender_username.charAt(0).toUpperCase() : '?';
+      const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+      msgDiv.innerHTML = `
+        <div class="message-avatar-wrapper">
+          <div class="message-avatar">${initial}</div>
+        </div>
+        <div class="message-content-box">
+          <div>
+            <span class="message-author">${escapeHtml(msg.sender_username)}</span>
             <span class="message-time">${timeStr}</span>
           </div>
           <div class="message-text">${escapeHtml(msg.content)}</div>
@@ -368,25 +556,105 @@
       const content = input.value.trim();
 
       if (content && ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: 'message',
-          username: currentUser.username,
-          content: content
-        }));
+        if (activeChat.type === 'general') {
+          ws.send(JSON.stringify({
+            type: 'message',
+            userId: currentUser.id,
+            content: content
+          }));
+        } else if (activeChat.type === 'private') {
+          ws.send(JSON.stringify({
+            type: 'private_message',
+            senderId: currentUser.id,
+            receiverId: activeChat.id,
+            content: content
+          }));
+        }
         input.value = '';
       }
     }
 
-    function scrollToBottom() {
-      const container = document.getElementById('messages-container');
-      container.scrollTop = container.scrollHeight;
+    async function loadFriends() {
+      try {
+        const res = await fetch(`/api/friends/${currentUser.id}`);
+        const data = await res.json();
+        if (data.success) {
+          friends = data.friends;
+          renderFriendsList();
+        }
+      } catch (err) {
+        console.error('Błąd znajomych:', err);
+      }
     }
 
-    function escapeHtml(str) {
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    function renderFriendsList() {
+      const list = document.getElementById('friends-list');
+      list.innerHTML = '';
+
+      friends.forEach(friend => {
+        const item = document.createElement('div');
+        const isActive = activeChat.type === 'private' && activeChat.id === friend.id;
+        item.className = `friend-item ${isActive ? 'active' : ''}`;
+        item.onclick = () => selectPrivateChat(friend.id, friend.username);
+
+        const statusClass = 'status-' + (friend.status || 'Offline').replace(/\s+/g, '-');
+
+        item.innerHTML = `
+          <div class="friend-name">
+            <span class="status-dot-inline ${statusClass}"></span>
+            <span>${escapeHtml(friend.username)}</span>
+          </div>
+        `;
+        list.appendChild(item);
+      });
     }
 
-    /* USTAWIENIA USTAWIEŃ I MODALA */
+    function openAddFriendModal() {
+      document.getElementById('friend-username-input').value = '';
+      document.getElementById('friend-message').style.display = 'none';
+      document.getElementById('friend-modal').style.display = 'flex';
+    }
+
+    function closeAddFriendModal() {
+      document.getElementById('friend-modal').style.display = 'none';
+    }
+
+    async function handleAddFriend(event) {
+      event.preventDefault();
+      const friendUsername = document.getElementById('friend-username-input').value;
+      const msgBox = document.getElementById('friend-message');
+
+      try {
+        const res = await fetch('/api/add-friend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, friendUsername })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          msgBox.innerText = data.message;
+          msgBox.className = 'modal-msg success';
+          msgBox.style.display = 'block';
+
+          if (!friends.some(f => f.id === data.friend.id)) {
+            friends.push(data.friend);
+            renderFriendsList();
+          }
+
+          setTimeout(closeAddFriendModal, 1000);
+        } else {
+          msgBox.innerText = data.message || 'Błąd';
+          msgBox.className = 'modal-msg error';
+          msgBox.style.display = 'block';
+        }
+      } catch (err) {
+        msgBox.innerText = 'Błąd połączenia.';
+        msgBox.className = 'modal-msg error';
+        msgBox.style.display = 'block';
+      }
+    }
+
     function openSettingsModal() {
       document.getElementById('settings-username').value = '';
       document.getElementById('settings-password').value = '';
@@ -424,21 +692,29 @@
           currentUser = data.user;
           updateUserUI();
           msgBox.innerText = 'Zapisano!';
-          msgBox.className = 'success';
+          msgBox.className = 'modal-msg success';
           msgBox.style.display = 'block';
-          setTimeout(() => {
-            closeSettingsModal();
-          }, 1000);
+          setTimeout(closeSettingsModal, 1000);
         } else {
           msgBox.innerText = data.message || 'Błąd zapisu';
-          msgBox.className = 'error';
+          msgBox.className = 'modal-msg error';
           msgBox.style.display = 'block';
         }
       } catch (err) {
         msgBox.innerText = 'Błąd połączenia.';
-        msgBox.className = 'error';
+        msgBox.className = 'modal-msg error';
         msgBox.style.display = 'block';
       }
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar-channels');
+      sidebar.classList.toggle('open');
+    }
+
+    function closeMobileSidebar() {
+      const sidebar = document.getElementById('sidebar-channels');
+      sidebar.classList.remove('open');
     }
 
     function logout() {
@@ -449,6 +725,16 @@
       document.getElementById('password').value = '';
       hideMessage();
       switchTab('login');
+    }
+
+    function scrollToBottom() {
+      const container = document.getElementById('messages-container');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
   </script>
 </body>

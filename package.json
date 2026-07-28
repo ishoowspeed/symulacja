@@ -1,7 +1,7 @@
 {
-  "name": "chat-app-neon",
-  "version": "1.0.0",
-  "description": "Aplikacja czatu z trwała bazą danych Neon.tech na Render.com",
+  "name": "chat-app-v2",
+  "version": "2.0.0",
+  "description": "Czat z prywatnymi wiadomościami, rozszerzonymi statusami i obsługą mobilną",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
