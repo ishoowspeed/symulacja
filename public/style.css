@@ -1,0 +1,372 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #0f172a;
+  color: #f8fafc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 15px;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 800px;
+  height: 90vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Ekran Logowania */
+.card {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 35px 25px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.login-header .logo-icon {
+  font-size: 3rem;
+  color: #38bdf8;
+  margin-bottom: 15px;
+}
+
+.login-header h2 {
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+}
+
+.login-header p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 25px;
+}
+
+#login-form input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #475569;
+  background-color: #0f172a;
+  color: #fff;
+  font-size: 1rem;
+  margin-bottom: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#login-form input:focus {
+  border-color: #38bdf8;
+}
+
+/* Przycisk */
+.btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn.primary {
+  background-color: #0284c7;
+  color: #ffffff;
+  width: 100%;
+}
+
+.btn.primary:hover {
+  background-color: #0369a1;
+}
+
+.btn.secondary {
+  background-color: #475569;
+  color: #fff;
+}
+
+.btn.secondary:hover {
+  background-color: #334155;
+}
+
+.btn.danger-outline {
+  background-color: transparent;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+}
+
+.btn.danger-outline:hover {
+  background-color: #ef4444;
+  color: #fff;
+}
+
+/* Ekran Czatu */
+.chat-container {
+  width: 100%;
+  height: 100%;
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+}
+
+.chat-header {
+  padding: 15px 20px;
+  background-color: #0f172a;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: #0284c7;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.status-online {
+  font-size: 0.8rem;
+  color: #22c55e;
+}
+
+.status-online i {
+  font-size: 0.6rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* CZERWONE KÓŁKO Z POWIADOMIENIAMI */
+.notification-badge {
+  position: relative;
+  background-color: #334155;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f1f5f9;
+  cursor: pointer;
+}
+
+.badge-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: #ef4444; /* Czerwone kółko */
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 2px 7px;
+  border-radius: 10px;
+  box-shadow: 0 0 5px rgba(239, 68, 68, 0.8);
+  border: 2px solid #0f172a;
+}
+
+/* Obszar Wiadomości */
+.chat-messages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.message-item {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  position: relative;
+  word-wrap: break-word;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-item.sent {
+  align-self: flex-end;
+  background-color: #0284c7;
+  color: #ffffff;
+  border-bottom-right-radius: 2px;
+}
+
+.message-item.received {
+  align-self: flex-start;
+  background-color: #334155;
+  color: #f8fafc;
+  border-bottom-left-radius: 2px;
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+  gap: 10px;
+}
+
+.message-author {
+  font-weight: bold;
+  color: #93c5fd;
+}
+
+.message-item.sent .message-author {
+  color: #e0f2fe;
+}
+
+.message-time {
+  opacity: 0.7;
+}
+
+.message-text {
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.edited-tag {
+  font-size: 0.7rem;
+  font-style: italic;
+  opacity: 0.8;
+  margin-left: 6px;
+  color: #fbbf24; /* Złoty akcent na tag edytowano */
+}
+
+/* Przycisk akcji przy wiadomościach własnych */
+.message-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  justify-content: flex-end;
+  opacity: 0.8;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  color: #e2e8f0;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: color 0.2s;
+}
+
+.action-btn:hover {
+  color: #ffffff;
+}
+
+.action-btn.delete-btn:hover {
+  color: #fca5a5;
+}
+
+/* Pole wpisywania wiadomości */
+.chat-input-area {
+  padding: 15px;
+  background-color: #0f172a;
+  border-top: 1px solid #334155;
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input-area input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background-color: #1e293b;
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.chat-input-area input:focus {
+  border-color: #38bdf8;
+}
+
+.send-btn {
+  width: 50px;
+}
+
+/* Modal edycji */
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background-color: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 450px;
+}
+
+.modal-content h3 {
+  margin-bottom: 12px;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #475569;
+  background-color: #0f172a;
+  color: #fff;
+  font-size: 0.95rem;
+  margin-bottom: 15px;
+  outline: none;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.hidden {
+  display: none !important;
+}
