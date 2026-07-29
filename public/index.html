@@ -29,7 +29,7 @@
     /* APLIKACJA CZATU */
     #app-container { display: none; width: 100vw; height: 100vh; flex-direction: row; position: relative; }
 
-    /* SIDEBAR KANAŁÓW / ZNAJOMYCH */
+    /* SIDEBAR ZNAJOMYCH */
     .sidebar-channels { width: 240px; background-color: #1e1f29; display: flex; flex-direction: column; border-right: 1px solid #2b2d3f; flex-shrink: 0; transition: transform 0.3s ease; }
     .server-header { padding: 16px; font-weight: bold; color: white; border-bottom: 1px solid #2b2d3f; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
     .mobile-close-btn { display: none; background: none; border: none; color: #949ba4; cursor: pointer; padding: 4px; border-radius: 4px; }
@@ -38,9 +38,9 @@
     .add-btn { background: none; border: none; color: #949ba4; cursor: pointer; display: flex; align-items: center; }
     .add-btn:hover { color: white; }
 
-    .channels-list { flex: 1; overflow-y: auto; padding: 4px; }
-    .channel-item { padding: 8px 12px; border-radius: 6px; color: #949ba4; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; margin-bottom: 2px; }
-    .channel-item:hover, .channel-item.active { background-color: #2b2d3f; color: #f2f3f5; }
+    .channels-list { flex: 1; overflow-y: auto; padding: 8px 4px; }
+    .main-tab { padding: 10px 12px; border-radius: 6px; color: #949ba4; cursor: pointer; display: flex; align-items: center; gap: 12px; font-weight: 600; margin-bottom: 12px; transition: background 0.2s, color 0.2s; }
+    .main-tab:hover, .main-tab.active { background-color: #2b2d3f; color: #f2f3f5; }
 
     .friend-item { padding: 8px 12px; border-radius: 6px; color: #949ba4; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-weight: 500; margin-bottom: 2px; }
     .friend-item:hover, .friend-item.active { background-color: #2b2d3f; color: #f2f3f5; }
@@ -129,16 +129,7 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
     .message-item:hover .msg-actions { display: flex; }
-    .msg-action-btn {
-      background: none;
-      border: none;
-      color: #949ba4;
-      cursor: pointer;
-      padding: 2px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-    }
+    .msg-action-btn { background: none; border: none; color: #949ba4; cursor: pointer; padding: 2px; border-radius: 4px; display: flex; align-items: center; }
     .msg-action-btn:hover { color: #ffffff; background: #3b3d54; }
     .msg-action-btn.delete:hover { color: #fca5a5; }
 
@@ -152,8 +143,10 @@
     .chat-input-wrapper { background-color: #1e1f29; border-radius: 8px; padding: 0 12px; display: flex; align-items: center; border: 1px solid #47326e; }
     .chat-input { width: 100%; padding: 12px 0; background: transparent; border: none; color: white; font-size: 1rem; }
     .chat-input:focus { outline: none; }
+    .chat-input:disabled { opacity: 0.5; cursor: not-allowed; }
     .send-btn { background: #8b5cf6; border: none; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-left: 8px; flex-shrink: 0; }
     .send-btn:hover { background: #7c3aed; }
+    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; background: #475569; }
 
     /* OKNA MODALNE */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); justify-content: center; align-items: center; z-index: 2000; }
@@ -194,6 +187,11 @@
 </head>
 <body>
 
+  <!-- ELEMENT AUDIO DLA POWIADOMIEŃ -->
+  <audio id="notification-sound" src="powiadomienie.mp3" preload="auto"></audio>
+  <!-- UKRYTY ELEMENT AUDIO DLA ROZMÓW -->
+  <audio id="remote-audio" autoplay></audio>
+
   <!-- EKRAN AUTORYZACJI -->
   <div class="auth-container" id="auth-box">
     <h2 id="auth-title">Witaj ponownie!</h2>
@@ -229,9 +227,10 @@
       </div>
 
       <div class="channels-list">
-        <div class="section-title">Kanały tekstowe</div>
-        <div class="channel-item active" id="channel-general" onclick="selectGeneralChat()">
-          <span style="font-size: 1.2rem; color: #a855f7;">#</span> ogólny
+        <!-- ZAKŁADKA ZNAJOMYCH -->
+        <div class="main-tab active" id="friends-tab" onclick="showFriendsTab()">
+          <span class="material-symbols-outlined" style="font-size: 1.3rem;">group</span>
+          Znajomi
         </div>
 
         <div class="section-title">
@@ -275,8 +274,8 @@
           <button class="mobile-menu-btn" onclick="toggleMobileSidebar()">
             <span class="material-symbols-outlined">menu</span>
           </button>
-          <span id="chat-type-icon" style="font-size: 1.4rem; color: #a855f7;">#</span>
-          <span id="chat-target-title">ogólny</span>
+          <span id="chat-type-icon" style="font-size: 1.4rem; color: #a855f7; display:none;">@</span>
+          <span id="chat-target-title">Znajomi</span>
         </div>
         <div class="chat-header-actions">
           <button class="call-btn" id="call-toggle-btn" onclick="toggleCall()" title="Zadzwoń">
@@ -290,16 +289,13 @@
       <div class="chat-input-area">
         <form onsubmit="sendMessage(event)">
           <div class="chat-input-wrapper">
-            <input type="text" class="chat-input" id="message-input" placeholder="Napisz wiadomość..." autocomplete="off">
-            <button type="submit" class="send-btn">Wyślij</button>
+            <input type="text" class="chat-input" id="message-input" placeholder="Wybierz znajomego, aby napisać..." autocomplete="off" disabled>
+            <button type="submit" class="send-btn" id="send-btn" disabled>Wyślij</button>
           </div>
         </form>
       </div>
     </div>
   </div>
-
-  <!-- UKRYTY ELEMENT AUDIO DLA ROZMÓW -->
-  <audio id="remote-audio" autoplay></audio>
 
   <!-- MODAL POŁĄCZENIA PRZYCHODZĄCEGO -->
   <div class="modal-overlay" id="incoming-call-modal">
@@ -307,7 +303,7 @@
       <div class="modal-header" style="justify-content: center; margin-bottom: 1rem;">
         <h3 id="incoming-caller-text">Połączenie przychodzące...</h3>
       </div>
-      <p style="color: #b9bbbe; font-size: 0.95rem; margin-bottom: 1.5rem;">Ktoś dzzwoni do Ciebie wideo/głosowo.</p>
+      <p style="color: #b9bbbe; font-size: 0.95rem; margin-bottom: 1.5rem;">Ktoś dzwoni do Ciebie wideo/głosowo.</p>
       <div class="modal-actions">
         <button type="button" class="btn-danger" onclick="rejectCall()">Odrzuć</button>
         <button type="button" class="auth-btn" style="background:#22c55e;" onclick="acceptCall()">Odbierz</button>
@@ -402,7 +398,7 @@
     let mode = 'login';
     let currentUser = null;
     let ws = null;
-    let activeChat = { type: 'general', id: null, name: 'ogólny' };
+    let activeChat = { type: 'none', id: null, name: '' };
     let friends = [];
     let messageToDelete = null;
 
@@ -412,6 +408,20 @@
     let inCall = false;
     let incomingCallData = null;
     const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+    // AUTOLOGOWANIE (sprawdzanie localStorage przy starcie)
+    window.onload = () => {
+      const savedUser = localStorage.getItem('elite_user');
+      if (savedUser) {
+        try {
+          currentUser = JSON.parse(savedUser);
+          enterChatApp();
+        } catch (e) {
+          console.error("Błąd parsowania danych sesji.");
+          localStorage.removeItem('elite_user');
+        }
+      }
+    };
 
     function switchTab(newMode) {
       mode = newMode;
@@ -464,6 +474,8 @@
             switchTab('login');
           } else {
             currentUser = data.user;
+            // Zapis do localStorage, aby utrzymać sesję po F5
+            localStorage.setItem('elite_user', JSON.stringify(currentUser));
             enterChatApp();
           }
         } else {
@@ -481,7 +493,7 @@
       updateUserUI();
       connectWebSocket();
       await loadFriends();
-      selectGeneralChat();
+      showFriendsTab();
     }
 
     function updateUserUI() {
@@ -510,19 +522,6 @@
           handleStatusUpdate(data);
         }
 
-        if (data.type === 'new_message' && activeChat.type === 'general') {
-          appendMessageUI(data.message);
-          scrollToBottom();
-        }
-
-        if (data.type === 'message_edited') {
-          updateMessageContentUI(data.messageId, data.content, true);
-        }
-
-        if (data.type === 'message_deleted') {
-          removeMessageUI(data.messageId);
-        }
-
         if (data.type === 'new_private_message') {
           const isCurrentPrivateChat = activeChat.type === 'private' && 
             (activeChat.id === data.message.sender_id || activeChat.id === data.message.receiver_id);
@@ -540,6 +539,7 @@
             if (friend) {
               friend.unread_count = (friend.unread_count || 0) + 1;
               renderFriendsList();
+              playNotificationSound();
             }
           }
         }
@@ -601,33 +601,65 @@
       });
     }
 
-    async function selectGeneralChat() {
-      activeChat = { type: 'general', id: null, name: 'ogólny' };
-      document.getElementById('chat-type-icon').innerText = '#';
-      document.getElementById('chat-target-title').innerText = 'ogólny';
-      document.getElementById('channel-general').classList.add('active');
-      document.getElementById('call-toggle-btn').style.display = 'none';
-
-      renderFriendsList();
-      closeMobileSidebar();
-
-      await loadGeneralMessages();
+    function playNotificationSound() {
+      if (currentUser && currentUser.status !== 'Nie przeszkadzać') {
+        const audio = document.getElementById('notification-sound');
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play().catch(e => console.log('Odtworzenie dźwięku zablokowane przez przeglądarkę:', e));
+        }
+      }
     }
 
+    // WIDOK ZNAJOMYCH
+    function showFriendsTab() {
+      activeChat = { type: 'none', id: null, name: '' };
+      document.getElementById('chat-type-icon').style.display = 'none';
+      document.getElementById('chat-target-title').innerText = 'Znajomi';
+      document.getElementById('friends-tab').classList.add('active');
+      document.getElementById('call-toggle-btn').style.display = 'none';
+
+      document.querySelectorAll('.friend-item').forEach(el => el.classList.remove('active'));
+
+      const input = document.getElementById('message-input');
+      const btn = document.getElementById('send-btn');
+      input.disabled = true;
+      btn.disabled = true;
+      input.placeholder = "Wybierz znajomego z listy...";
+
+      const container = document.getElementById('messages-container');
+      container.innerHTML = `
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#949ba4;">
+          <span class="material-symbols-outlined" style="font-size: 4rem; margin-bottom: 10px; opacity: 0.5;">group</span>
+          <h3>Twoi znajomi</h3>
+          <p style="margin-top: 5px; font-size: 0.9rem;">Wybierz osobę z listy po lewej, aby rozpocząć czat.</p>
+        </div>
+      `;
+
+      closeMobileSidebar();
+    }
+
+    // PRZEŁĄCZANIE NA PRYWATNĄ ROZMOWĘ
     async function selectPrivateChat(friendId, friendName) {
       activeChat = { type: 'private', id: friendId, name: friendName };
+      document.getElementById('chat-type-icon').style.display = 'inline-block';
       document.getElementById('chat-type-icon').innerText = '@';
       document.getElementById('chat-target-title').innerText = friendName;
-      document.getElementById('channel-general').classList.remove('active');
+      document.getElementById('friends-tab').classList.remove('active');
       
+      const input = document.getElementById('message-input');
+      const btn = document.getElementById('send-btn');
+      input.disabled = false;
+      btn.disabled = false;
+      input.placeholder = `Napisz do @${friendName}...`;
+      input.focus();
+
       const callBtn = document.getElementById('call-toggle-btn');
       callBtn.style.display = 'flex';
       updateCallButtonStyle();
 
       const friend = friends.find(f => f.id === friendId);
-      if (friend) {
-        friend.unread_count = 0;
-      }
+      if (friend) friend.unread_count = 0;
 
       renderFriendsList();
       closeMobileSidebar();
@@ -773,21 +805,6 @@
       };
     }
 
-    async function loadGeneralMessages() {
-      try {
-        const res = await fetch('/api/messages');
-        const data = await res.json();
-        if (data.success) {
-          const container = document.getElementById('messages-container');
-          container.innerHTML = '';
-          data.messages.forEach(msg => appendMessageUI(msg));
-          scrollToBottom();
-        }
-      } catch (err) {
-        console.error('Błąd pobierania wiadomości:', err);
-      }
-    }
-
     async function loadPrivateMessages(friendId) {
       try {
         const res = await fetch(`/api/private-messages/${currentUser.id}/${friendId}`);
@@ -801,46 +818,6 @@
       } catch (err) {
         console.error('Błąd pobierania PW:', err);
       }
-    }
-
-    function appendMessageUI(msg) {
-      const container = document.getElementById('messages-container');
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'message-item';
-      msgDiv.id = `msg-${msg.id}`;
-
-      const initial = msg.username ? msg.username.charAt(0).toUpperCase() : '?';
-      const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-      const statusClass = 'status-' + (msg.status || 'Offline').replace(/\s+/g, '-');
-      const userIdClass = msg.user_id ? `msg-user-${msg.user_id}` : '';
-      const isOwner = msg.user_id === currentUser.id || msg.username === currentUser.username;
-      const editedTag = msg.is_edited ? '<span class="edited-tag">(ZEDYTOWANE)</span>' : '';
-
-      msgDiv.innerHTML = `
-        <div class="message-avatar-wrapper">
-          <div class="message-avatar">${initial}</div>
-          <div class="message-status-dot ${statusClass} ${userIdClass}"></div>
-        </div>
-        <div class="message-content-box">
-          <div>
-            <span class="message-author">${escapeHtml(msg.username)}</span>
-            <span class="message-time">${timeStr}</span>
-            ${editedTag}
-          </div>
-          <div class="message-text" id="msg-text-${msg.id}">${escapeHtml(msg.content)}</div>
-        </div>
-        ${isOwner ? `
-        <div class="msg-actions">
-          <button class="msg-action-btn" onclick="startEditMessage(${msg.id}, false)" title="Edytuj">
-            <span class="material-symbols-outlined" style="font-size: 1.1rem;">edit</span>
-          </button>
-          <button class="msg-action-btn delete" onclick="openDeleteModal(${msg.id}, false)" title="Usuń">
-            <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
-          </button>
-        </div>` : ''}
-      `;
-
-      container.appendChild(msgDiv);
     }
 
     function appendPrivateMessageUI(msg) {
@@ -928,21 +905,12 @@
       if (!newContent) return;
 
       if (ws && ws.readyState === WebSocket.OPEN) {
-        if (isPrivate) {
-          ws.send(JSON.stringify({
-            type: 'edit_private_message',
-            messageId: msgId,
-            userId: currentUser.id,
-            content: newContent
-          }));
-        } else {
-          ws.send(JSON.stringify({
-            type: 'edit_message',
-            messageId: msgId,
-            userId: currentUser.id,
-            content: newContent
-          }));
-        }
+        ws.send(JSON.stringify({
+          type: 'edit_private_message',
+          messageId: msgId,
+          userId: currentUser.id,
+          content: newContent
+        }));
       }
       cancelEditMessage(msgId);
     }
@@ -985,22 +953,14 @@
 
     function confirmDeleteMessage() {
       if (!messageToDelete) return;
-      const { id, isPrivate } = messageToDelete;
+      const { id } = messageToDelete;
 
       if (ws && ws.readyState === WebSocket.OPEN) {
-        if (isPrivate) {
-          ws.send(JSON.stringify({
-            type: 'delete_private_message',
-            messageId: id,
-            userId: currentUser.id
-          }));
-        } else {
-          ws.send(JSON.stringify({
-            type: 'delete_message',
-            messageId: id,
-            userId: currentUser.id
-          }));
-        }
+        ws.send(JSON.stringify({
+          type: 'delete_private_message',
+          messageId: id,
+          userId: currentUser.id
+        }));
       }
       closeDeleteModal();
     }
@@ -1016,13 +976,7 @@
       const content = input.value.trim();
 
       if (content && ws && ws.readyState === WebSocket.OPEN) {
-        if (activeChat.type === 'general') {
-          ws.send(JSON.stringify({
-            type: 'message',
-            userId: currentUser.id,
-            content: content
-          }));
-        } else if (activeChat.type === 'private') {
+        if (activeChat.type === 'private') {
           ws.send(JSON.stringify({
             type: 'private_message',
             senderId: currentUser.id,
@@ -1155,6 +1109,9 @@
 
         if (response.ok && data.success) {
           currentUser = data.user;
+          // Aktualizujemy dane autologowania
+          localStorage.setItem('elite_user', JSON.stringify(currentUser));
+          
           updateUserUI();
           msgBox.innerText = 'Zapisano!';
           msgBox.className = 'modal-msg success';
@@ -1185,8 +1142,11 @@
     function logout() {
       if (inCall) hangupCall();
       if (ws) ws.close();
+      
+      localStorage.removeItem('elite_user'); // Usuwamy sesję autologowania
       currentUser = null;
       friends = [];
+      
       document.getElementById('app-container').style.display = 'none';
       document.getElementById('auth-box').style.display = 'block';
       document.getElementById('username').value = '';
