@@ -32,6 +32,8 @@
     /* SIDEBAR KANAŁÓW / ZNAJOMYCH */
     .sidebar-channels { width: 240px; background-color: #1e1f29; display: flex; flex-direction: column; border-right: 1px solid #2b2d3f; flex-shrink: 0; transition: transform 0.3s ease; }
     .server-header { padding: 16px; font-weight: bold; color: white; border-bottom: 1px solid #2b2d3f; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
+    .mobile-close-btn { display: none; background: none; border: none; color: #949ba4; cursor: pointer; padding: 4px; border-radius: 4px; }
+    .mobile-close-btn:hover { color: white; background-color: #2b2d3f; }
     .section-title { font-size: 0.75rem; font-weight: bold; color: #949ba4; text-transform: uppercase; padding: 12px 12px 4px; display: flex; justify-content: space-between; align-items: center; }
     .add-btn { background: none; border: none; color: #949ba4; cursor: pointer; display: flex; align-items: center; }
     .add-btn:hover { color: white; }
@@ -161,6 +163,7 @@
     /* WERSJA MOBILNA RESPONSYWNOŚĆ */
     @media (max-width: 768px) {
       .mobile-menu-btn { display: flex; align-items: center; }
+      .mobile-close-btn { display: flex; align-items: center; } /* PRZYCISK X TYLKO DLA MOBILE */
       
       .sidebar-channels {
         position: absolute;
@@ -218,6 +221,9 @@
     <div class="sidebar-channels" id="sidebar-channels">
       <div class="server-header">
         <span>ELITE</span>
+        <button class="mobile-close-btn" onclick="closeMobileSidebar()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
 
       <div class="channels-list">
@@ -516,9 +522,9 @@
         renderFriendsList();
       }
 
-      // Aktualizacja ikon przy wiadomościach na czacie ogólnym
+      // Aktualizacja ikon przy wiadomościach wszędzie
       document.querySelectorAll(`.msg-user-${data.userId}`).forEach(dot => {
-        dot.className = `message-status-dot status-${data.status.replace(/\s+/g, '-')}`;
+        dot.className = `message-status-dot status-${data.status.replace(/\s+/g, '-')} msg-user-${data.userId}`;
       });
     }
 
@@ -633,11 +639,23 @@
       const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
       const isOwner = msg.sender_id === currentUser.id;
 
+      // Status z nadawcy (jeśli to nasza wiadomość - bierzemy nasz, jeśli nie, bierzemy zapisany lub z pamięci)
+      let effStatus = 'Offline';
+      if (isOwner) {
+        effStatus = currentUser.status || 'Online';
+      } else {
+        const friendObj = friends.find(f => f.id === msg.sender_id);
+        effStatus = friendObj ? (friendObj.status || 'Offline') : (msg.sender_status || 'Offline');
+      }
+      const statusClass = 'status-' + effStatus.replace(/\s+/g, '-');
+      const userIdClass = `msg-user-${msg.sender_id}`;
+
       const editedTag = msg.is_edited ? '<span class="edited-tag">(ZEDYTOWANE)</span>' : '';
 
       msgDiv.innerHTML = `
         <div class="message-avatar-wrapper">
           <div class="message-avatar">${initial}</div>
+          <div class="message-status-dot ${statusClass} ${userIdClass}"></div>
         </div>
         <div class="message-content-box">
           <div>
