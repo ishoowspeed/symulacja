@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Aplikacja Czat</title>
+  <title>ELITE</title>
   <!-- Google Fonts Material Symbols -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
   <style>
@@ -28,11 +28,6 @@
 
     /* APLIKACJA CZATU */
     #app-container { display: none; width: 100vw; height: 100vh; flex-direction: row; position: relative; }
-
-    /* SIDEBAR SERWERÓW */
-    .sidebar-servers { width: 72px; background-color: #13131a; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; border-right: 1px solid #2b2d3f; flex-shrink: 0; }
-    .server-icon { width: 48px; height: 48px; background-color: #2b2d3f; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #a855f7; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 1.2rem; }
-    .server-icon:hover, .server-icon.active { background-color: #8b5cf6; color: white; border-radius: 16px; }
 
     /* SIDEBAR KANAŁÓW / ZNAJOMYCH */
     .sidebar-channels { width: 240px; background-color: #1e1f29; display: flex; flex-direction: column; border-right: 1px solid #2b2d3f; flex-shrink: 0; transition: transform 0.3s ease; }
@@ -166,7 +161,6 @@
     /* WERSJA MOBILNA RESPONSYWNOŚĆ */
     @media (max-width: 768px) {
       .mobile-menu-btn { display: flex; align-items: center; }
-      .sidebar-servers { display: none; }
       
       .sidebar-channels {
         position: absolute;
@@ -221,16 +215,9 @@
 
   <!-- APLIKACJA CZATU -->
   <div id="app-container">
-    <div class="sidebar-servers">
-      <div class="server-icon active">T</div>
-    </div>
-
     <div class="sidebar-channels" id="sidebar-channels">
       <div class="server-header">
-        <span>Test</span>
-        <button class="icon-btn" onclick="toggleMobileSidebar()" style="display: md-none;">
-          <span class="material-symbols-outlined">close</span>
-        </button>
+        <span>ELITE</span>
       </div>
 
       <div class="channels-list">
