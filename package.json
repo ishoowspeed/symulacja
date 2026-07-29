@@ -1,20 +1,14 @@
 {
-  "name": "czat-aplikacja",
-  "version": "1.0.0",
-  "description": "Aplikacja czatu w czasie rzeczywistym z edycją, usuwaniem wiadomości i powiadomieniami",
+  "name": "chat-app-v3",
+  "version": "3.0.0",
+  "description": "Czat z prywatnymi wiadomościami, edycją/usuwaniem wiadomości oraz powiadomieniami o nieprzeczytanych wiadomościach",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "socket.io": "^4.7.2"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+    "pg": "^8.11.3",
+    "ws": "^8.14.2"
+  }
 }

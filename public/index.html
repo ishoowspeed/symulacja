@@ -2,79 +2,977 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Czat Online</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Aplikacja Czat</title>
+  <!-- Google Fonts Material Symbols -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: #1e1f29; color: #f2f3f5; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+
+    /* EKRAN AUTORYZACJI */
+    .auth-container { background: #2b2d3f; padding: 2rem; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); width: 90%; max-width: 400px; border: 1px solid #47326e; text-align: center; }
+    .auth-container h2 { color: #ffffff; font-size: 1.5rem; margin-bottom: 1.2rem; }
+    .tabs { display: flex; margin-bottom: 1.2rem; border-bottom: 2px solid #3b3d54; }
+    .tab { flex: 1; padding: 0.75rem; cursor: pointer; color: #949ba4; font-weight: 600; }
+    .tab.active { color: #a855f7; border-bottom: 2px solid #a855f7; margin-bottom: -2px; }
+    .form-group { margin-bottom: 1rem; text-align: left; }
+    label { display: block; margin-bottom: 0.4rem; color: #b9bbbe; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+    input, select { width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #1e1f29; background: #1e1f29; color: white; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: #a855f7; }
+    button.auth-btn { width: 100%; padding: 0.8rem; border-radius: 6px; border: none; background: #8b5cf6; color: white; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    button.auth-btn:hover { background: #7c3aed; }
+    #message { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; display: none; }
+    .success { background: #15803d; color: #4ade80; }
+    .error { background: #991b1b; color: #fca5a5; }
+
+    /* APLIKACJA CZATU */
+    #app-container { display: none; width: 100vw; height: 100vh; flex-direction: row; position: relative; }
+
+    /* SIDEBAR SERWERÓW */
+    .sidebar-servers { width: 72px; background-color: #13131a; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; border-right: 1px solid #2b2d3f; flex-shrink: 0; }
+    .server-icon { width: 48px; height: 48px; background-color: #2b2d3f; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #a855f7; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 1.2rem; }
+    .server-icon:hover, .server-icon.active { background-color: #8b5cf6; color: white; border-radius: 16px; }
+
+    /* SIDEBAR KANAŁÓW / ZNAJOMYCH */
+    .sidebar-channels { width: 240px; background-color: #1e1f29; display: flex; flex-direction: column; border-right: 1px solid #2b2d3f; flex-shrink: 0; transition: transform 0.3s ease; }
+    .server-header { padding: 16px; font-weight: bold; color: white; border-bottom: 1px solid #2b2d3f; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
+    .section-title { font-size: 0.75rem; font-weight: bold; color: #949ba4; text-transform: uppercase; padding: 12px 12px 4px; display: flex; justify-content: space-between; align-items: center; }
+    .add-btn { background: none; border: none; color: #949ba4; cursor: pointer; display: flex; align-items: center; }
+    .add-btn:hover { color: white; }
+
+    .channels-list { flex: 1; overflow-y: auto; padding: 4px; }
+    .channel-item { padding: 8px 12px; border-radius: 6px; color: #949ba4; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; margin-bottom: 2px; }
+    .channel-item:hover, .channel-item.active { background-color: #2b2d3f; color: #f2f3f5; }
+
+    .friend-item { padding: 8px 12px; border-radius: 6px; color: #949ba4; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-weight: 500; margin-bottom: 2px; }
+    .friend-item:hover, .friend-item.active { background-color: #2b2d3f; color: #f2f3f5; }
+    .friend-name { display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* BADGE POWIADOMIEŃ / CZERWONE KÓŁKO */
+    .unread-badge {
+      background-color: #ef4444;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: bold;
+      border-radius: 50%;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* STATUS DOT */
+    .status-dot-inline { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .status-Online { background-color: #22c55e; }
+    .status-Offline { background-color: #64748b; }
+    .status-Nie-przeszkadzać { background-color: #ef4444; }
+
+    /* PANEL UŻYTKOWNIKA */
+    .user-panel { padding: 12px; background-color: #13131a; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2b2d3f; }
+    .user-info { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+    .avatar-wrapper { position: relative; display: inline-block; }
+    .avatar { width: 36px; height: 36px; background-color: #8b5cf6; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1rem; color: white; }
+    .status-dot-avatar { position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #13131a; }
+
+    .user-details { display: flex; flex-direction: column; }
+    .username-text { font-weight: bold; font-size: 0.85rem; color: #f2f3f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+    .status-text { font-size: 0.7rem; color: #949ba4; }
+
+    .panel-actions { display: flex; gap: 4px; align-items: center; }
+    .icon-btn { background: none; border: none; color: #949ba4; cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s, background 0.2s; }
+    .icon-btn:hover { color: #f2f3f5; background-color: #2b2d3f; }
+    .icon-btn.logout:hover { color: #fca5a5; }
+
+    /* OBSZAR CZATU */
+    .chat-area { flex: 1; background-color: #2b2d3f; display: flex; flex-direction: column; height: 100vh; }
+    .chat-header { height: 50px; border-bottom: 1px solid #1e1f29; display: flex; align-items: center; padding: 0 16px; font-weight: bold; gap: 8px; color: white; justify-content: space-between; flex-shrink: 0; }
+    .chat-title-group { display: flex; align-items: center; gap: 8px; }
+    .mobile-menu-btn { display: none; background: none; border: none; color: white; cursor: pointer; margin-right: 8px; }
+
+    .chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .message-item { display: flex; gap: 12px; position: relative; group: relative; }
+    .message-item:hover .msg-actions { display: flex; }
+    
+    .message-avatar-wrapper { position: relative; flex-shrink: 0; }
+    .message-avatar { width: 40px; height: 40px; background-color: #7c3aed; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; color: white; }
+    .message-status-dot { position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #2b2d3f; }
+
+    .message-content-box { display: flex; flex-direction: column; flex: 1; }
+    .message-author { font-weight: bold; color: #c084fc; font-size: 0.95rem; margin-bottom: 2px; }
+    .message-time { font-size: 0.75rem; color: #949ba4; font-weight: normal; margin-left: 8px; }
+    .edited-tag { font-size: 0.75rem; color: #a3a3a3; font-style: italic; margin-left: 6px; font-weight: normal; }
+    .message-text { color: #dcddde; font-size: 0.95rem; line-height: 1.4; word-break: break-word; }
+
+    /* PRZYCISKI EDYCJI/USUWANIA WIADOMOŚCI */
+    .msg-actions {
+      display: none;
+      position: absolute;
+      top: -10px;
+      right: 10px;
+      background: #1e1f29;
+      border: 1px solid #47326e;
+      border-radius: 6px;
+      padding: 2px 4px;
+      gap: 4px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .msg-action-btn {
+      background: none;
+      border: none;
+      color: #949ba4;
+      cursor: pointer;
+      padding: 2px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+    }
+    .msg-action-btn:hover { color: #ffffff; background: #3b3d54; }
+    .msg-action-btn.delete:hover { color: #fca5a5; }
+
+    /* FORMULARZ EDYCJI W CZACIE */
+    .edit-input-wrapper { display: flex; gap: 8px; margin-top: 6px; }
+    .edit-input { flex: 1; background: #1e1f29; border: 1px solid #a855f7; color: white; padding: 6px 10px; border-radius: 6px; }
+    .edit-btn-save { background: #8b5cf6; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .edit-btn-cancel { background: #475569; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+
+    .chat-input-area { padding: 16px; background-color: #2b2d3f; flex-shrink: 0; }
+    .chat-input-wrapper { background-color: #1e1f29; border-radius: 8px; padding: 0 12px; display: flex; align-items: center; border: 1px solid #47326e; }
+    .chat-input { width: 100%; padding: 12px 0; background: transparent; border: none; color: white; font-size: 1rem; }
+    .chat-input:focus { outline: none; }
+    .send-btn { background: #8b5cf6; border: none; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-left: 8px; flex-shrink: 0; }
+    .send-btn:hover { background: #7c3aed; }
+
+    /* OKNA MODALNE */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); justify-content: center; align-items: center; z-index: 2000; }
+    .modal-content { background: #2b2d3f; padding: 2rem; border-radius: 12px; border: 1px solid #47326e; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .modal-header h3 { color: #ffffff; font-size: 1.3rem; }
+    .modal-close { background: none; border: none; color: #949ba4; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 1.5rem; }
+    .btn-secondary { background: #475569; border: none; color: white; padding: 0.75rem; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; }
+    .modal-msg { margin-top: 1rem; padding: 0.5rem; border-radius: 4px; font-size: 0.85rem; text-align: center; display: none; }
+
+    /* WERSJA MOBILNA RESPONSYWNOŚĆ */
+    @media (max-width: 768px) {
+      .mobile-menu-btn { display: flex; align-items: center; }
+      .sidebar-servers { display: none; }
+      
+      .sidebar-channels {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 1000;
+        transform: translateX(-100%);
+        width: 280px;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+      }
+
+      .sidebar-channels.open {
+        transform: translateX(0);
+      }
+
+      .chat-header {
+        padding: 0 12px;
+      }
+
+      .chat-input-area {
+        padding: 10px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="app-container">
-    
-    <!-- Ekran logowania -->
-    <div id="login-screen" class="card">
-      <div class="login-header">
-        <i class="fa-solid fa-comments logo-icon"></i>
-        <h2>Witaj w Czacie</h2>
-        <p>Wprowadź swój pseudonim, aby dołączyć do dyskusji</p>
-      </div>
-      <form id="login-form">
-        <input type="text" id="username-input" placeholder="Twoja nazwa / pseudonim..." required maxlength="20" autocomplete="off">
-        <button type="submit" class="btn primary"><i class="fa-solid fa-right-to-bracket"></i> Dołącz do czatu</button>
-      </form>
+
+  <!-- EKRAN AUTORYZACJI -->
+  <div class="auth-container" id="auth-box">
+    <h2 id="auth-title">Witaj ponownie!</h2>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')">Logowanie</div>
+      <div class="tab" onclick="switchTab('register')">Rejestracja</div>
     </div>
 
-    <!-- Główny interfejs czatu -->
-    <div id="chat-screen" class="chat-container hidden">
-      <!-- Pasek boczny / nagłówek -->
-      <header class="chat-header">
-        <div class="user-info">
-          <div class="avatar" id="user-avatar">U</div>
-          <div>
-            <h3 id="display-username">Użytkownik</h3>
-            <span class="status-online"><i class="fa-solid fa-circle"></i> Dostępny</span>
-          </div>
+    <form onsubmit="handleSubmit(event)">
+      <div class="form-group">
+        <label>Nazwa użytkownika</label>
+        <input type="text" id="username" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Hasło</label>
+        <input type="password" id="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="auth-btn" id="submit-btn">Zaloguj się</button>
+    </form>
+
+    <div id="message"></div>
+  </div>
+
+  <!-- APLIKACJA CZATU -->
+  <div id="app-container">
+    <div class="sidebar-servers">
+      <div class="server-icon active">T</div>
+    </div>
+
+    <div class="sidebar-channels" id="sidebar-channels">
+      <div class="server-header">
+        <span>Test</span>
+        <button class="icon-btn" onclick="toggleMobileSidebar()" style="display: md-none;">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="channels-list">
+        <div class="section-title">Kanały tekstowe</div>
+        <div class="channel-item active" id="channel-general" onclick="selectGeneralChat()">
+          <span style="font-size: 1.2rem; color: #a855f7;">#</span> ogólny
         </div>
 
-        <div class="header-actions">
-          <!-- Czerwone kółko z powiadomieniami (widoczne TYLKO po zalogowaniu) -->
-          <div id="notification-badge" class="notification-badge hidden" title="Nieprzeczytane wiadomości">
-            <i class="fa-solid fa-bell"></i>
-            <span id="unread-count" class="badge-count">0</span>
-          </div>
-
-          <button id="logout-btn" class="btn danger-outline" title="Wyloguj się">
-            <i class="fa-solid fa-power-off"></i> Wyloguj
+        <div class="section-title">
+          <span>Wiadomości Prywatne</span>
+          <button class="add-btn" onclick="openAddFriendModal()" title="Dodaj znajomego">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">person_add</span>
           </button>
         </div>
-      </header>
 
-      <!-- Obszar wiadomości -->
-      <div class="chat-messages" id="messages-container">
-        <!-- Wiadomości będą dodawane dynamicznie -->
+        <div id="friends-list"></div>
       </div>
 
-      <!-- Formularz wysyłania wiadomości -->
-      <form id="message-form" class="chat-input-area">
-        <input type="text" id="message-input" placeholder="Napisz wiadomość..." autocomplete="off">
-        <button type="submit" class="btn primary send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+      <!-- Panel Użytkownika -->
+      <div class="user-panel">
+        <div class="user-info">
+          <div class="avatar-wrapper">
+            <div class="avatar" id="user-avatar">U</div>
+            <div class="status-dot-avatar status-Online" id="status-dot"></div>
+          </div>
+          <div class="user-details">
+            <span class="username-text" id="logged-username">Użytkownik</span>
+            <span class="status-text" id="logged-status">Online</span>
+          </div>
+        </div>
+        
+        <div class="panel-actions">
+          <button class="icon-btn" onclick="openSettingsModal()" title="Ustawienia">
+            <span class="material-symbols-outlined">settings</span>
+          </button>
+          <button class="icon-btn logout" onclick="logout()" title="Wyloguj">
+            <span class="material-symbols-outlined">logout</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Czat Główny -->
+    <div class="chat-area">
+      <div class="chat-header">
+        <div class="chat-title-group">
+          <button class="mobile-menu-btn" onclick="toggleMobileSidebar()">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+          <span id="chat-type-icon" style="font-size: 1.4rem; color: #a855f7;">#</span>
+          <span id="chat-target-title">ogólny</span>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="messages-container"></div>
+
+      <div class="chat-input-area">
+        <form onsubmit="sendMessage(event)">
+          <div class="chat-input-wrapper">
+            <input type="text" class="chat-input" id="message-input" placeholder="Napisz wiadomość..." autocomplete="off">
+            <button type="submit" class="send-btn">Wyślij</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL USTAWIEŃ -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Ustawienia konta</h3>
+        <button class="modal-close" onclick="closeSettingsModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form onsubmit="handleSettingsSave(event)">
+        <div class="form-group">
+          <label>Nowa nazwa użytkownika</label>
+          <input type="text" id="settings-username" placeholder="Pozostaw puste, aby nie zmieniać">
+        </div>
+
+        <div class="form-group">
+          <label>Nowe hasło</label>
+          <input type="password" id="settings-password" placeholder="Pozostaw puste, aby nie zmieniać">
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <select id="settings-status">
+            <option value="Online">Online</option>
+            <option value="Offline">Offline</option>
+            <option value="Nie przeszkadzać">Nie przeszkadzać</option>
+          </select>
+        </div>
+
+        <div id="settings-message" class="modal-msg"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeSettingsModal()">Anuluj</button>
+          <button type="submit" class="auth-btn" style="flex:1;">Zapisz</button>
+        </div>
       </form>
     </div>
-
   </div>
 
-  <!-- Modal do edycji wiadomości -->
-  <div id="edit-modal" class="modal hidden">
+  <!-- MODAL DODAWANIA ZNAJOMEGO -->
+  <div class="modal-overlay" id="friend-modal">
     <div class="modal-content">
-      <h3>Edytuj wiadomość</h3>
-      <input type="text" id="edit-input" maxlength="500">
-      <div class="modal-actions">
-        <button id="cancel-edit-btn" class="btn secondary">Anuluj</button>
-        <button id="save-edit-btn" class="btn primary">Zapisz zmiany</button>
+      <div class="modal-header">
+        <h3>Dodaj znajomego</h3>
+        <button class="modal-close" onclick="closeAddFriendModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
+
+      <form onsubmit="handleAddFriend(event)">
+        <div class="form-group">
+          <label>Nazwa użytkownika</label>
+          <input type="text" id="friend-username-input" placeholder="Wpisz dokładną nazwę" required>
+        </div>
+
+        <div id="friend-message" class="modal-msg"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeAddFriendModal()">Anuluj</button>
+          <button type="submit" class="auth-btn" style="flex:1;">Dodaj</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="app.js"></script>
+  <script>
+    let mode = 'login';
+    let currentUser = null;
+    let ws = null;
+    let activeChat = { type: 'general', id: null, name: 'ogólny' };
+    let friends = [];
+    let editingMessageId = null;
+
+    function switchTab(newMode) {
+      mode = newMode;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      const tabs = document.querySelectorAll('.tab');
+      
+      if (mode === 'login') {
+        tabs[0].classList.add('active');
+        document.getElementById('auth-title').innerText = 'Witaj ponownie!';
+        document.getElementById('submit-btn').innerText = 'Zaloguj się';
+      } else {
+        tabs[1].classList.add('active');
+        document.getElementById('auth-title').innerText = 'Stwórz konto';
+        document.getElementById('submit-btn').innerText = 'Zarejestruj się';
+      }
+      hideMessage();
+    }
+
+    function showMessage(text, isError = false) {
+      const msgBox = document.getElementById('message');
+      msgBox.innerText = text;
+      msgBox.className = isError ? 'error' : 'success';
+      msgBox.style.display = 'block';
+    }
+
+    function hideMessage() {
+      document.getElementById('message').style.display = 'none';
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      hideMessage();
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const endpoint = mode === 'register' ? '/api/register' : '/api/login';
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          if (mode === 'register') {
+            showMessage(data.message + ' Możesz się teraz zalogować.');
+            switchTab('login');
+          } else {
+            currentUser = data.user;
+            enterChatApp();
+          }
+        } else {
+          showMessage(data.message || 'Wystąpił błąd', true);
+        }
+      } catch (err) {
+        showMessage('Brak połączenia z serwerem.', true);
+      }
+    }
+
+    async function enterChatApp() {
+      document.getElementById('auth-box').style.display = 'none';
+      document.getElementById('app-container').style.display = 'flex';
+
+      updateUserUI();
+      connectWebSocket();
+      await loadFriends();
+      selectGeneralChat();
+    }
+
+    function updateUserUI() {
+      document.getElementById('logged-username').innerText = currentUser.username;
+      document.getElementById('user-avatar').innerText = currentUser.username.charAt(0).toUpperCase();
+      
+      const status = currentUser.status || 'Online';
+      document.getElementById('logged-status').innerText = status;
+
+      const dot = document.getElementById('status-dot');
+      dot.className = 'status-dot-avatar status-' + status.replace(/\s+/g, '-');
+    }
+
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: 'auth', userId: currentUser.id }));
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'status_update') {
+          handleStatusUpdate(data);
+        }
+
+        // WIADOMOŚĆ OGÓLNA
+        if (data.type === 'new_message' && activeChat.type === 'general') {
+          appendMessageUI(data.message);
+          scrollToBottom();
+        }
+
+        if (data.type === 'message_edited') {
+          updateMessageContentUI(data.messageId, data.content, true);
+        }
+
+        if (data.type === 'message_deleted') {
+          removeMessageUI(data.messageId);
+        }
+
+        // WIADOMOŚĆ PRYWATNA
+        if (data.type === 'new_private_message') {
+          const isCurrentPrivateChat = activeChat.type === 'private' && 
+            (activeChat.id === data.message.sender_id || activeChat.id === data.message.receiver_id);
+
+          if (isCurrentPrivateChat) {
+            appendPrivateMessageUI(data.message);
+            scrollToBottom();
+            // Powiadom serwer/oznacz jako przeczytane
+            fetch('/api/mark-read', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: currentUser.id, friendId: activeChat.id })
+            });
+          } else if (data.message.receiver_id === currentUser.id) {
+            // Zwiększ licznik nieprzeczytanych wiadomości dla tego znajomego
+            const friend = friends.find(f => f.id === data.message.sender_id);
+            if (friend) {
+              friend.unread_count = (friend.unread_count || 0) + 1;
+              renderFriendsList();
+            }
+          }
+        }
+
+        if (data.type === 'private_message_edited') {
+          updateMessageContentUI(data.messageId, data.content, true);
+        }
+
+        if (data.type === 'private_message_deleted') {
+          removeMessageUI(data.messageId);
+        }
+      };
+
+      ws.onclose = () => {
+        setTimeout(connectWebSocket, 3000);
+      };
+    }
+
+    function handleStatusUpdate(data) {
+      // Zmiana statusu u znajomych
+      const friendObj = friends.find(f => f.id === data.userId);
+      if (friendObj) {
+        friendObj.status = data.status;
+        renderFriendsList();
+      }
+
+      // Aktualizacja ikon przy wiadomościach na czacie ogólnym
+      document.querySelectorAll(`.msg-user-${data.userId}`).forEach(dot => {
+        dot.className = `message-status-dot status-${data.status.replace(/\s+/g, '-')}`;
+      });
+    }
+
+    async function selectGeneralChat() {
+      activeChat = { type: 'general', id: null, name: 'ogólny' };
+      document.getElementById('chat-type-icon').innerText = '#';
+      document.getElementById('chat-target-title').innerText = 'ogólny';
+      document.getElementById('channel-general').classList.add('active');
+
+      renderFriendsList();
+      closeMobileSidebar();
+
+      await loadGeneralMessages();
+    }
+
+    async function selectPrivateChat(friendId, friendName) {
+      activeChat = { type: 'private', id: friendId, name: friendName };
+      document.getElementById('chat-type-icon').innerText = '@';
+      document.getElementById('chat-target-title').innerText = friendName;
+      document.getElementById('channel-general').classList.remove('active');
+
+      // Wyzeruj licznik nieprzeczytanych
+      const friend = friends.find(f => f.id === friendId);
+      if (friend) {
+        friend.unread_count = 0;
+      }
+
+      renderFriendsList();
+      closeMobileSidebar();
+
+      await loadPrivateMessages(friendId);
+    }
+
+    async function loadGeneralMessages() {
+      try {
+        const res = await fetch('/api/messages');
+        const data = await res.json();
+        if (data.success) {
+          const container = document.getElementById('messages-container');
+          container.innerHTML = '';
+          data.messages.forEach(msg => appendMessageUI(msg));
+          scrollToBottom();
+        }
+      } catch (err) {
+        console.error('Błąd pobierania wiadomości:', err);
+      }
+    }
+
+    async function loadPrivateMessages(friendId) {
+      try {
+        const res = await fetch(`/api/private-messages/${currentUser.id}/${friendId}`);
+        const data = await res.json();
+        if (data.success) {
+          const container = document.getElementById('messages-container');
+          container.innerHTML = '';
+          data.messages.forEach(msg => appendPrivateMessageUI(msg));
+          scrollToBottom();
+        }
+      } catch (err) {
+        console.error('Błąd pobierania PW:', err);
+      }
+    }
+
+    function appendMessageUI(msg) {
+      const container = document.getElementById('messages-container');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message-item';
+      msgDiv.id = `msg-${msg.id}`;
+
+      const initial = msg.username ? msg.username.charAt(0).toUpperCase() : '?';
+      const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      const statusClass = 'status-' + (msg.status || 'Offline').replace(/\s+/g, '-');
+      const userIdClass = msg.user_id ? `msg-user-${msg.user_id}` : '';
+      const isOwner = msg.user_id === currentUser.id || msg.username === currentUser.username;
+
+      const editedTag = msg.is_edited ? '<span class="edited-tag">(ZEDYTOWANE)</span>' : '';
+
+      msgDiv.innerHTML = `
+        <div class="message-avatar-wrapper">
+          <div class="message-avatar">${initial}</div>
+          <div class="message-status-dot ${statusClass} ${userIdClass}"></div>
+        </div>
+        <div class="message-content-box">
+          <div>
+            <span class="message-author">${escapeHtml(msg.username)}</span>
+            <span class="message-time">${timeStr}</span>
+            ${editedTag}
+          </div>
+          <div class="message-text" id="msg-text-${msg.id}">${escapeHtml(msg.content)}</div>
+        </div>
+        ${isOwner ? `
+        <div class="msg-actions">
+          <button class="msg-action-btn" onclick="startEditMessage(${msg.id}, false)" title="Edytuj">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">edit</span>
+          </button>
+          <button class="msg-action-btn delete" onclick="deleteMessage(${msg.id}, false)" title="Usuń">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
+          </button>
+        </div>` : ''}
+      `;
+
+      container.appendChild(msgDiv);
+    }
+
+    function appendPrivateMessageUI(msg) {
+      const container = document.getElementById('messages-container');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message-item';
+      msgDiv.id = `msg-${msg.id}`;
+
+      const initial = msg.sender_username ? msg.sender_username.charAt(0).toUpperCase() : '?';
+      const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      const isOwner = msg.sender_id === currentUser.id;
+
+      const editedTag = msg.is_edited ? '<span class="edited-tag">(ZEDYTOWANE)</span>' : '';
+
+      msgDiv.innerHTML = `
+        <div class="message-avatar-wrapper">
+          <div class="message-avatar">${initial}</div>
+        </div>
+        <div class="message-content-box">
+          <div>
+            <span class="message-author">${escapeHtml(msg.sender_username)}</span>
+            <span class="message-time">${timeStr}</span>
+            ${editedTag}
+          </div>
+          <div class="message-text" id="msg-text-${msg.id}">${escapeHtml(msg.content)}</div>
+        </div>
+        ${isOwner ? `
+        <div class="msg-actions">
+          <button class="msg-action-btn" onclick="startEditMessage(${msg.id}, true)" title="Edytuj">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">edit</span>
+          </button>
+          <button class="msg-action-btn delete" onclick="deleteMessage(${msg.id}, true)" title="Usuń">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
+          </button>
+        </div>` : ''}
+      `;
+
+      container.appendChild(msgDiv);
+    }
+
+    function startEditMessage(msgId, isPrivate = false) {
+      const textElem = document.getElementById(`msg-text-${msgId}`);
+      if (!textElem) return;
+
+      const currentText = textElem.innerText;
+      const box = textElem.parentElement;
+
+      textElem.style.display = 'none';
+
+      const existingEdit = box.querySelector('.edit-input-wrapper');
+      if (existingEdit) existingEdit.remove();
+
+      const editDiv = document.createElement('div');
+      editDiv.className = 'edit-input-wrapper';
+      editDiv.innerHTML = `
+        <input type="text" class="edit-input" id="edit-input-${msgId}" value="${escapeHtml(currentText)}">
+        <button class="edit-btn-save" onclick="saveEditMessage(${msgId}, ${isPrivate})">Zapisz</button>
+        <button class="edit-btn-cancel" onclick="cancelEditMessage(${msgId})">Anuluj</button>
+      `;
+
+      box.appendChild(editDiv);
+      const input = document.getElementById(`edit-input-${msgId}`);
+      input.focus();
+      input.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') saveEditMessage(msgId, isPrivate);
+        if (e.key === 'Escape') cancelEditMessage(msgId);
+      });
+    }
+
+    function saveEditMessage(msgId, isPrivate) {
+      const input = document.getElementById(`edit-input-${msgId}`);
+      if (!input) return;
+
+      const newContent = input.value.trim();
+      if (!newContent) return;
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        if (isPrivate) {
+          ws.send(JSON.stringify({
+            type: 'edit_private_message',
+            messageId: msgId,
+            userId: currentUser.id,
+            content: newContent
+          }));
+        } else {
+          ws.send(JSON.stringify({
+            type: 'edit_message',
+            messageId: msgId,
+            userId: currentUser.id,
+            content: newContent
+          }));
+        }
+      }
+      cancelEditMessage(msgId);
+    }
+
+    function cancelEditMessage(msgId) {
+      const textElem = document.getElementById(`msg-text-${msgId}`);
+      if (textElem) textElem.style.display = 'block';
+
+      const box = textElem ? textElem.parentElement : null;
+      if (box) {
+        const editWrapper = box.querySelector('.edit-input-wrapper');
+        if (editWrapper) editWrapper.remove();
+      }
+    }
+
+    function updateMessageContentUI(msgId, newContent, isEdited) {
+      const textElem = document.getElementById(`msg-text-${msgId}`);
+      if (textElem) {
+        textElem.innerText = newContent;
+        const authorBox = textElem.parentElement.querySelector('div');
+        if (authorBox && !authorBox.querySelector('.edited-tag')) {
+          const tag = document.createElement('span');
+          tag.className = 'edited-tag';
+          tag.innerText = '(ZEDYTOWANE)';
+          authorBox.appendChild(tag);
+        }
+      }
+    }
+
+    function deleteMessage(msgId, isPrivate = false) {
+      if (!confirm('Czy na pewno chcesz usunąć tę wiadomość?')) return;
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        if (isPrivate) {
+          ws.send(JSON.stringify({
+            type: 'delete_private_message',
+            messageId: msgId,
+            userId: currentUser.id
+          }));
+        } else {
+          ws.send(JSON.stringify({
+            type: 'delete_message',
+            messageId: msgId,
+            userId: currentUser.id
+          }));
+        }
+      }
+    }
+
+    function removeMessageUI(msgId) {
+      const msgDiv = document.getElementById(`msg-${msgId}`);
+      if (msgDiv) msgDiv.remove();
+    }
+
+    function sendMessage(event) {
+      event.preventDefault();
+      const input = document.getElementById('message-input');
+      const content = input.value.trim();
+
+      if (content && ws && ws.readyState === WebSocket.OPEN) {
+        if (activeChat.type === 'general') {
+          ws.send(JSON.stringify({
+            type: 'message',
+            userId: currentUser.id,
+            content: content
+          }));
+        } else if (activeChat.type === 'private') {
+          ws.send(JSON.stringify({
+            type: 'private_message',
+            senderId: currentUser.id,
+            receiverId: activeChat.id,
+            content: content,
+            isCurrentChatActive: true
+          }));
+        }
+        input.value = '';
+      }
+    }
+
+    async function loadFriends() {
+      try {
+        const res = await fetch(`/api/friends/${currentUser.id}`);
+        const data = await res.json();
+        if (data.success) {
+          friends = data.friends;
+          renderFriendsList();
+        }
+      } catch (err) {
+        console.error('Błąd znajomych:', err);
+      }
+    }
+
+    function renderFriendsList() {
+      const list = document.getElementById('friends-list');
+      list.innerHTML = '';
+
+      friends.forEach(friend => {
+        const item = document.createElement('div');
+        const isActive = activeChat.type === 'private' && activeChat.id === friend.id;
+        item.className = `friend-item ${isActive ? 'active' : ''}`;
+        item.onclick = () => selectPrivateChat(friend.id, friend.username);
+
+        const statusClass = 'status-' + (friend.status || 'Offline').replace(/\s+/g, '-');
+        const unreadBadge = (!isActive && friend.unread_count && friend.unread_count > 0)
+          ? `<span class="unread-badge">${friend.unread_count}</span>`
+          : '';
+
+        item.innerHTML = `
+          <div class="friend-name">
+            <span class="status-dot-inline ${statusClass}"></span>
+            <span>${escapeHtml(friend.username)}</span>
+          </div>
+          ${unreadBadge}
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function openAddFriendModal() {
+      document.getElementById('friend-username-input').value = '';
+      document.getElementById('friend-message').style.display = 'none';
+      document.getElementById('friend-modal').style.display = 'flex';
+    }
+
+    function closeAddFriendModal() {
+      document.getElementById('friend-modal').style.display = 'none';
+    }
+
+    async function handleAddFriend(event) {
+      event.preventDefault();
+      const friendUsername = document.getElementById('friend-username-input').value;
+      const msgBox = document.getElementById('friend-message');
+
+      try {
+        const res = await fetch('/api/add-friend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, friendUsername })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          msgBox.innerText = data.message;
+          msgBox.className = 'modal-msg success';
+          msgBox.style.display = 'block';
+
+          if (!friends.some(f => f.id === data.friend.id)) {
+            friends.push(data.friend);
+            renderFriendsList();
+          }
+
+          setTimeout(closeAddFriendModal, 1000);
+        } else {
+          msgBox.innerText = data.message || 'Błąd';
+          msgBox.className = 'modal-msg error';
+          msgBox.style.display = 'block';
+        }
+      } catch (err) {
+        msgBox.innerText = 'Błąd połączenia.';
+        msgBox.className = 'modal-msg error';
+        msgBox.style.display = 'block';
+      }
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settings-username').value = '';
+      document.getElementById('settings-password').value = '';
+      document.getElementById('settings-status').value = currentUser.status || 'Online';
+      document.getElementById('settings-message').style.display = 'none';
+      document.getElementById('settings-modal').style.display = 'flex';
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').style.display = 'none';
+    }
+
+    async function handleSettingsSave(event) {
+      event.preventDefault();
+      const newUsername = document.getElementById('settings-username').value;
+      const newPassword = document.getElementById('settings-password').value;
+      const newStatus = document.getElementById('settings-status').value;
+      const msgBox = document.getElementById('settings-message');
+
+      try {
+        const response = await fetch('/api/update-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            newUsername,
+            newPassword,
+            newStatus
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          currentUser = data.user;
+          updateUserUI();
+          msgBox.innerText = 'Zapisano!';
+          msgBox.className = 'modal-msg success';
+          msgBox.style.display = 'block';
+          setTimeout(closeSettingsModal, 1000);
+        } else {
+          msgBox.innerText = data.message || 'Błąd zapisu';
+          msgBox.className = 'modal-msg error';
+          msgBox.style.display = 'block';
+        }
+      } catch (err) {
+        msgBox.innerText = 'Błąd połączenia.';
+        msgBox.className = 'modal-msg error';
+        msgBox.style.display = 'block';
+      }
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar-channels');
+      sidebar.classList.toggle('open');
+    }
+
+    function closeMobileSidebar() {
+      const sidebar = document.getElementById('sidebar-channels');
+      sidebar.classList.remove('open');
+    }
+
+    function logout() {
+      if (ws) ws.close();
+      currentUser = null;
+      friends = [];
+      document.getElementById('app-container').style.display = 'none';
+      document.getElementById('auth-box').style.display = 'block';
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      hideMessage();
+      switchTab('login');
+    }
+
+    function scrollToBottom() {
+      const container = document.getElementById('messages-container');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+  </script>
 </body>
 </html>
