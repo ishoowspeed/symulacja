@@ -97,9 +97,13 @@
     .chat-title-group { display: flex; align-items: center; gap: 8px; }
     .mobile-menu-btn { display: none; background: none; border: none; color: white; cursor: pointer; margin-right: 8px; }
 
+    .chat-header-actions { display: flex; align-items: center; gap: 8px; }
+    .call-btn { background: none; border: none; color: #949ba4; cursor: pointer; display: none; align-items: center; padding: 6px; border-radius: 4px; }
+    .call-btn:hover { color: #22c55e; background-color: #1e1f29; }
+    .call-btn.active-call { color: #ef4444; background-color: #1e1f29; display: flex; }
+
     .chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-    .message-item { display: flex; gap: 12px; position: relative; group: relative; }
-    .message-item:hover .msg-actions { display: flex; }
+    .message-item { display: flex; gap: 12px; position: relative; }
     
     .message-avatar-wrapper { position: relative; flex-shrink: 0; }
     .message-avatar { width: 40px; height: 40px; background-color: #7c3aed; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; color: white; }
@@ -124,6 +128,7 @@
       gap: 4px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
+    .message-item:hover .msg-actions { display: flex; }
     .msg-action-btn {
       background: none;
       border: none;
@@ -158,12 +163,14 @@
     .modal-close { background: none; border: none; color: #949ba4; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; }
     .modal-actions { display: flex; gap: 10px; margin-top: 1.5rem; }
     .btn-secondary { background: #475569; border: none; color: white; padding: 0.75rem; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; }
+    .btn-danger { background: #ef4444; border: none; color: white; padding: 0.75rem; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; }
+    .btn-danger:hover { background: #dc2626; }
     .modal-msg { margin-top: 1rem; padding: 0.5rem; border-radius: 4px; font-size: 0.85rem; text-align: center; display: none; }
 
     /* WERSJA MOBILNA RESPONSYWNOŚĆ */
     @media (max-width: 768px) {
       .mobile-menu-btn { display: flex; align-items: center; }
-      .mobile-close-btn { display: flex; align-items: center; } /* PRZYCISK X TYLKO DLA MOBILE */
+      .mobile-close-btn { display: flex; align-items: center; }
       
       .sidebar-channels {
         position: absolute;
@@ -180,13 +187,8 @@
         transform: translateX(0);
       }
 
-      .chat-header {
-        padding: 0 12px;
-      }
-
-      .chat-input-area {
-        padding: 10px;
-      }
+      .chat-header { padding: 0 12px; }
+      .chat-input-area { padding: 10px; }
     }
   </style>
 </head>
@@ -276,6 +278,11 @@
           <span id="chat-type-icon" style="font-size: 1.4rem; color: #a855f7;">#</span>
           <span id="chat-target-title">ogólny</span>
         </div>
+        <div class="chat-header-actions">
+          <button class="call-btn" id="call-toggle-btn" onclick="toggleCall()" title="Zadzwoń">
+            <span class="material-symbols-outlined" id="call-icon">call</span>
+          </button>
+        </div>
       </div>
 
       <div class="chat-messages" id="messages-container"></div>
@@ -287,6 +294,23 @@
             <button type="submit" class="send-btn">Wyślij</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- UKRYTY ELEMENT AUDIO DLA ROZMÓW -->
+  <audio id="remote-audio" autoplay></audio>
+
+  <!-- MODAL POŁĄCZENIA PRZYCHODZĄCEGO -->
+  <div class="modal-overlay" id="incoming-call-modal">
+    <div class="modal-content" style="text-align: center;">
+      <div class="modal-header" style="justify-content: center; margin-bottom: 1rem;">
+        <h3 id="incoming-caller-text">Połączenie przychodzące...</h3>
+      </div>
+      <p style="color: #b9bbbe; font-size: 0.95rem; margin-bottom: 1.5rem;">Ktoś dzzwoni do Ciebie wideo/głosowo.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger" onclick="rejectCall()">Odrzuć</button>
+        <button type="button" class="auth-btn" style="background:#22c55e;" onclick="acceptCall()">Odbierz</button>
       </div>
     </div>
   </div>
@@ -357,13 +381,37 @@
     </div>
   </div>
 
+  <!-- MODAL POTWIERDZANIA USUNIĘCIA WIADOMOŚCI -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Usuń wiadomość</h3>
+        <button class="modal-close" onclick="closeDeleteModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <p style="color: #b9bbbe; font-size: 0.95rem;">Czy na pewno chcesz usunąć tę wiadomość? Tej operacji nie można cofnąć.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeDeleteModal()">Anuluj</button>
+        <button type="button" class="btn-danger" id="confirm-delete-btn">Usuń</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let mode = 'login';
     let currentUser = null;
     let ws = null;
     let activeChat = { type: 'general', id: null, name: 'ogólny' };
     let friends = [];
-    let editingMessageId = null;
+    let messageToDelete = null;
+
+    // WebRTC zmienne połączeń głosowych
+    let peerConnection = null;
+    let localStream = null;
+    let inCall = false;
+    let incomingCallData = null;
+    const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
     function switchTab(newMode) {
       mode = newMode;
@@ -455,14 +503,13 @@
         ws.send(JSON.stringify({ type: 'auth', userId: currentUser.id }));
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = async (event) => {
         const data = JSON.parse(event.data);
 
         if (data.type === 'status_update') {
           handleStatusUpdate(data);
         }
 
-        // WIADOMOŚĆ OGÓLNA
         if (data.type === 'new_message' && activeChat.type === 'general') {
           appendMessageUI(data.message);
           scrollToBottom();
@@ -476,7 +523,6 @@
           removeMessageUI(data.messageId);
         }
 
-        // WIADOMOŚĆ PRYWATNA
         if (data.type === 'new_private_message') {
           const isCurrentPrivateChat = activeChat.type === 'private' && 
             (activeChat.id === data.message.sender_id || activeChat.id === data.message.receiver_id);
@@ -484,14 +530,12 @@
           if (isCurrentPrivateChat) {
             appendPrivateMessageUI(data.message);
             scrollToBottom();
-            // Powiadom serwer/oznacz jako przeczytane
             fetch('/api/mark-read', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userId: currentUser.id, friendId: activeChat.id })
             });
           } else if (data.message.receiver_id === currentUser.id) {
-            // Zwiększ licznik nieprzeczytanych wiadomości dla tego znajomego
             const friend = friends.find(f => f.id === data.message.sender_id);
             if (friend) {
               friend.unread_count = (friend.unread_count || 0) + 1;
@@ -507,6 +551,37 @@
         if (data.type === 'private_message_deleted') {
           removeMessageUI(data.messageId);
         }
+
+        // --- OBSŁUGA WEBRTC SIGNALING ---
+        if (data.type === 'call_offer') {
+          if (inCall) {
+            ws.send(JSON.stringify({ type: 'call_reject', targetId: data.senderId, userId: currentUser.id }));
+            return;
+          }
+          incomingCallData = data;
+          document.getElementById('incoming-caller-text').innerText = `Połączenie od: ${data.senderName}`;
+          document.getElementById('incoming-call-modal').style.display = 'flex';
+        }
+
+        if (data.type === 'call_answer') {
+          if (peerConnection) {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+          }
+        }
+
+        if (data.type === 'ice_candidate') {
+          if (peerConnection && data.candidate) {
+            try {
+              await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            } catch (e) {
+              console.error('Błąd ICE candidate:', e);
+            }
+          }
+        }
+
+        if (data.type === 'call_reject' || data.type === 'call_hangup') {
+          endCallCleanup();
+        }
       };
 
       ws.onclose = () => {
@@ -515,14 +590,12 @@
     }
 
     function handleStatusUpdate(data) {
-      // Zmiana statusu u znajomych
       const friendObj = friends.find(f => f.id === data.userId);
       if (friendObj) {
         friendObj.status = data.status;
         renderFriendsList();
       }
 
-      // Aktualizacja ikon przy wiadomościach wszędzie
       document.querySelectorAll(`.msg-user-${data.userId}`).forEach(dot => {
         dot.className = `message-status-dot status-${data.status.replace(/\s+/g, '-')} msg-user-${data.userId}`;
       });
@@ -533,6 +606,7 @@
       document.getElementById('chat-type-icon').innerText = '#';
       document.getElementById('chat-target-title').innerText = 'ogólny';
       document.getElementById('channel-general').classList.add('active');
+      document.getElementById('call-toggle-btn').style.display = 'none';
 
       renderFriendsList();
       closeMobileSidebar();
@@ -545,8 +619,11 @@
       document.getElementById('chat-type-icon').innerText = '@';
       document.getElementById('chat-target-title').innerText = friendName;
       document.getElementById('channel-general').classList.remove('active');
+      
+      const callBtn = document.getElementById('call-toggle-btn');
+      callBtn.style.display = 'flex';
+      updateCallButtonStyle();
 
-      // Wyzeruj licznik nieprzeczytanych
       const friend = friends.find(f => f.id === friendId);
       if (friend) {
         friend.unread_count = 0;
@@ -556,6 +633,144 @@
       closeMobileSidebar();
 
       await loadPrivateMessages(friendId);
+    }
+
+    // --- LOGIKA POŁĄCZEŃ GŁOSOWYCH WEBRTC ---
+    function updateCallButtonStyle() {
+      const btn = document.getElementById('call-toggle-btn');
+      const icon = document.getElementById('call-icon');
+      if (inCall) {
+        btn.className = 'call-btn active-call';
+        icon.innerText = 'call_end';
+        btn.title = 'Zakończ połączenie';
+      } else {
+        btn.className = 'call-btn';
+        icon.innerText = 'call';
+        btn.title = 'Zadzwoń';
+      }
+    }
+
+    async function toggleCall() {
+      if (inCall) {
+        hangupCall();
+      } else {
+        startCall();
+      }
+    }
+
+    async function startCall() {
+      if (activeChat.type !== 'private') return;
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        createPeerConnection(activeChat.id);
+
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        ws.send(JSON.stringify({
+          type: 'call_offer',
+          targetId: activeChat.id,
+          senderId: currentUser.id,
+          senderName: currentUser.username,
+          offer: offer
+        }));
+
+        inCall = true;
+        updateCallButtonStyle();
+      } catch (err) {
+        console.error('Błąd dostępu do mikrofonu:', err);
+        alert('Nie można uzyskać dostępu do mikrofonu.');
+      }
+    }
+
+    async function acceptCall() {
+      document.getElementById('incoming-call-modal').style.display = 'none';
+      if (!incomingCallData) return;
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        
+        // Przełącz aktywne okno czatu na osobę, która dzwoni
+        selectPrivateChat(incomingCallData.senderId, incomingCallData.senderName);
+
+        createPeerConnection(incomingCallData.senderId);
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingCallData.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        ws.send(JSON.stringify({
+          type: 'call_answer',
+          targetId: incomingCallData.senderId,
+          userId: currentUser.id,
+          answer: answer
+        }));
+
+        inCall = true;
+        updateCallButtonStyle();
+        incomingCallData = null;
+      } catch (err) {
+        console.error('Błąd akceptacji połączenia:', err);
+      }
+    }
+
+    function rejectCall() {
+      document.getElementById('incoming-call-modal').style.display = 'none';
+      if (incomingCallData) {
+        ws.send(JSON.stringify({
+          type: 'call_reject',
+          targetId: incomingCallData.senderId,
+          userId: currentUser.id
+        }));
+        incomingCallData = null;
+      }
+    }
+
+    function hangupCall() {
+      if (activeChat.type === 'private') {
+        ws.send(JSON.stringify({
+          type: 'call_hangup',
+          targetId: activeChat.id,
+          userId: currentUser.id
+        }));
+      }
+      endCallCleanup();
+    }
+
+    function endCallCleanup() {
+      if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+      }
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      inCall = false;
+      updateCallButtonStyle();
+    }
+
+    function createPeerConnection(remoteId) {
+      peerConnection = new RTCPeerConnection(rtcConfig);
+
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          ws.send(JSON.stringify({
+            type: 'ice_candidate',
+            targetId: remoteId,
+            userId: currentUser.id,
+            candidate: event.candidate
+          }));
+        }
+      };
+
+      peerConnection.ontrack = (event) => {
+        const remoteAudio = document.getElementById('remote-audio');
+        remoteAudio.srcObject = event.streams[0];
+      };
     }
 
     async function loadGeneralMessages() {
@@ -599,7 +814,6 @@
       const statusClass = 'status-' + (msg.status || 'Offline').replace(/\s+/g, '-');
       const userIdClass = msg.user_id ? `msg-user-${msg.user_id}` : '';
       const isOwner = msg.user_id === currentUser.id || msg.username === currentUser.username;
-
       const editedTag = msg.is_edited ? '<span class="edited-tag">(ZEDYTOWANE)</span>' : '';
 
       msgDiv.innerHTML = `
@@ -620,7 +834,7 @@
           <button class="msg-action-btn" onclick="startEditMessage(${msg.id}, false)" title="Edytuj">
             <span class="material-symbols-outlined" style="font-size: 1.1rem;">edit</span>
           </button>
-          <button class="msg-action-btn delete" onclick="deleteMessage(${msg.id}, false)" title="Usuń">
+          <button class="msg-action-btn delete" onclick="openDeleteModal(${msg.id}, false)" title="Usuń">
             <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
           </button>
         </div>` : ''}
@@ -639,7 +853,6 @@
       const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
       const isOwner = msg.sender_id === currentUser.id;
 
-      // Status z nadawcy (jeśli to nasza wiadomość - bierzemy nasz, jeśli nie, bierzemy zapisany lub z pamięci)
       let effStatus = 'Offline';
       if (isOwner) {
         effStatus = currentUser.status || 'Online';
@@ -649,7 +862,6 @@
       }
       const statusClass = 'status-' + effStatus.replace(/\s+/g, '-');
       const userIdClass = `msg-user-${msg.sender_id}`;
-
       const editedTag = msg.is_edited ? '<span class="edited-tag">(ZEDYTOWANE)</span>' : '';
 
       msgDiv.innerHTML = `
@@ -670,7 +882,7 @@
           <button class="msg-action-btn" onclick="startEditMessage(${msg.id}, true)" title="Edytuj">
             <span class="material-symbols-outlined" style="font-size: 1.1rem;">edit</span>
           </button>
-          <button class="msg-action-btn delete" onclick="deleteMessage(${msg.id}, true)" title="Usuń">
+          <button class="msg-action-btn delete" onclick="openDeleteModal(${msg.id}, true)" title="Usuń">
             <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
           </button>
         </div>` : ''}
@@ -760,24 +972,37 @@
       }
     }
 
-    function deleteMessage(msgId, isPrivate = false) {
-      if (!confirm('Czy na pewno chcesz usunąć tę wiadomość?')) return;
+    function openDeleteModal(msgId, isPrivate) {
+      messageToDelete = { id: msgId, isPrivate: isPrivate };
+      document.getElementById('delete-modal').style.display = 'flex';
+      document.getElementById('confirm-delete-btn').onclick = confirmDeleteMessage;
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('delete-modal').style.display = 'none';
+      messageToDelete = null;
+    }
+
+    function confirmDeleteMessage() {
+      if (!messageToDelete) return;
+      const { id, isPrivate } = messageToDelete;
 
       if (ws && ws.readyState === WebSocket.OPEN) {
         if (isPrivate) {
           ws.send(JSON.stringify({
             type: 'delete_private_message',
-            messageId: msgId,
+            messageId: id,
             userId: currentUser.id
           }));
         } else {
           ws.send(JSON.stringify({
             type: 'delete_message',
-            messageId: msgId,
+            messageId: id,
             userId: currentUser.id
           }));
         }
       }
+      closeDeleteModal();
     }
 
     function removeMessageUI(msgId) {
@@ -909,7 +1134,7 @@
 
     async function handleSettingsSave(event) {
       event.preventDefault();
-      const newUsername = document.getElementById('settings-username').value;
+      const newUsername = document.getElementById('settings-username-input') ? document.getElementById('settings-username-input').value : document.getElementById('settings-username').value;
       const newPassword = document.getElementById('settings-password').value;
       const newStatus = document.getElementById('settings-status').value;
       const msgBox = document.getElementById('settings-message');
@@ -958,6 +1183,7 @@
     }
 
     function logout() {
+      if (inCall) hangupCall();
       if (ws) ws.close();
       currentUser = null;
       friends = [];
