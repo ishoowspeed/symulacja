@@ -285,7 +285,7 @@ app.get('/api/private-messages/:userId/:friendId', async (req, res) => {
     );
 
     const result = await pool.query(`
-      SELECT pm.id, pm.sender_id, pm.receiver_id, pm.content, pm.is_edited, pm.created_at, u.username as sender_username
+      SELECT pm.id, pm.sender_id, pm.receiver_id, pm.content, pm.is_edited, pm.created_at, u.username as sender_username, u.status as sender_status
       FROM private_messages pm
       JOIN users u ON pm.sender_id = u.id
       WHERE (pm.sender_id = $1 AND pm.receiver_id = $2)
@@ -293,7 +293,13 @@ app.get('/api/private-messages/:userId/:friendId', async (req, res) => {
       ORDER BY pm.id ASC LIMIT 100
     `, [userId, friendId]);
 
-    res.json({ success: true, messages: result.rows });
+    // Dodaj aktualny status z gniazd websocket do wyniku API
+    const messages = result.rows.map(row => ({
+      ...row,
+      sender_status: activeSockets.has(row.sender_id) ? (row.sender_status || 'Online') : 'Offline'
+    }));
+
+    res.json({ success: true, messages });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'Błąd wiadomości prywatnych.' });
@@ -402,14 +408,17 @@ wss.on('connection', (ws) => {
           [parsed.senderId, parsed.receiverId, parsed.content, isRead]
         );
 
-        const senderRes = await pool.query('SELECT username FROM users WHERE id = $1', [parsed.senderId]);
+        const senderRes = await pool.query('SELECT username, status FROM users WHERE id = $1', [parsed.senderId]);
         const senderUsername = senderRes.rows[0]?.username || 'Ktoś';
+        const senderStatus = senderRes.rows[0]?.status || 'Online';
+        const effSenderStatus = activeSockets.has(parsed.senderId) ? senderStatus : 'Offline';
 
         const pmPayload = JSON.stringify({
           type: 'new_private_message',
           message: {
             ...insertRes.rows[0],
-            sender_username: senderUsername
+            sender_username: senderUsername,
+            sender_status: effSenderStatus
           }
         });
 
